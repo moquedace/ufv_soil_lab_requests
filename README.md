@@ -51,3 +51,21 @@ source("scripts/02_run_tests.R")
 
 Os testes cobrem parsing de coordenadas, exportacao tabular e um fluxo basico
 do Shiny com preenchimento de solicitante, amostra e envio.
+
+## Google Sheets
+
+Para gravar os dados do piloto na planilha Google:
+
+1. Copie `.Renviron.example` para `.Renviron`.
+2. Confira o ID da planilha em `GOOGLE_SHEET_ID`.
+3. Altere `USE_GOOGLE_SHEETS=true`.
+4. Reinicie a sessao do R.
+5. Rode:
+
+```r
+source("scripts/03_setup_google_sheets.R")
+source("scripts/01_run_app.R")
+```
+
+Na primeira execucao, o pacote `googlesheets4` pode abrir o fluxo de
+autenticacao da sua conta Google.

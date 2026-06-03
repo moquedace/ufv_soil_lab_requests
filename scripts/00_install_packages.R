@@ -10,7 +10,8 @@ packages <- c(
   "googlesheets4",
   "googledrive",
   "testthat",
-  "shinytest2"
+  "shinytest2",
+  "withr"
 )
 
 installed <- rownames(installed.packages())

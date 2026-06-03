@@ -55,7 +55,7 @@ mod_solicitante_ui <- function(id) {
   )
 }
 
-mod_solicitante_server <- function(id, app_config, store) {
+mod_solicitante_server <- function(id, app_config, store, persist_store = function(new_store) invisible(FALSE)) {
   moduleServer(id, function(input, output, session) {
     samples <- mod_amostras_server("amostras", app_config)
     last_submission_id <- reactiveVal("")
@@ -158,12 +158,19 @@ mod_solicitante_server <- function(id, app_config, store) {
 
       new_analyses <- do.call(rbind, analysis_rows)
 
+      new_store <- list(
+        solicitacoes = new_request,
+        amostras = new_samples,
+        analises = if (is.null(new_analyses)) data.frame() else new_analyses
+      )
+
       current$solicitacoes <- rbind(current$solicitacoes, new_request)
       current$amostras <- rbind(current$amostras, new_samples)
       if (!is.null(new_analyses)) {
         current$analises <- rbind(current$analises, new_analyses)
       }
       store(current)
+      persist_store(new_store)
       last_submission_id(request_id)
 
       showNotification("Solicitacao registrada no prototipo.", type = "message")
