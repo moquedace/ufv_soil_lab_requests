@@ -30,5 +30,6 @@ source("scripts/01_run_app.R")
 O prototipo inicial ainda usa dados simulados em memoria. A integracao com
 Google Sheets entra depois que validarmos o fluxo das telas.
 
-No cadastro de amostras, use o campo "Buscar municipio, localidade ou
-referencia" para centralizar o mapa. Depois clique no ponto da amostra.
+No cadastro de amostras, use o campo "Buscar municipio, localidade, referencia
+ou digitar a coordenada" para centralizar o mapa. Ele aceita texto ou coordenada
+decimal, por exemplo `-22.72, -47.65`. Depois clique no ponto da amostra.

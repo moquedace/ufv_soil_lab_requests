@@ -29,7 +29,7 @@ mod_amostras_ui <- function(id) {
       uiOutput(ns("chn_ui")),
       bslib::layout_columns(
         col_widths = c(8, 4),
-        textInput(ns("busca_lugar"), "Buscar municipio, localidade ou referencia"),
+        textInput(ns("busca_lugar"), "Buscar municipio, localidade, referencia ou digitar a coordenada"),
         div(
           br(),
           actionButton(ns("buscar_lugar"), "Buscar no mapa", class = "btn btn-outline-primary")
@@ -116,9 +116,13 @@ mod_amostras_server <- function(id, app_config) {
         return()
       }
 
-      result <- geocode_osm(query)
+      result <- parse_decimal_coordinate(query)
       if (is.null(result)) {
-        showNotification("Nao encontrei esse local. Tente incluir municipio, UF ou Brasil.", type = "warning")
+        result <- geocode_osm(query)
+      }
+
+      if (is.null(result)) {
+        showNotification("Nao encontrei esse local. Tente incluir municipio, UF, Brasil ou coordenada decimal.", type = "warning")
         return()
       }
 
@@ -263,5 +267,27 @@ geocode_osm <- function(query) {
     lat = as.numeric(data$lat[[1]]),
     lon = as.numeric(data$lon[[1]]),
     label = data$display_name[[1]]
+  )
+}
+
+parse_decimal_coordinate <- function(query) {
+  pattern <- "-?\\d+(?:[\\.,]\\d+)?"
+  numbers <- regmatches(query, gregexpr(pattern, query))[[1]]
+
+  if (length(numbers) < 2) {
+    return(NULL)
+  }
+
+  lat <- as.numeric(gsub(",", ".", numbers[[1]], fixed = TRUE))
+  lon <- as.numeric(gsub(",", ".", numbers[[2]], fixed = TRUE))
+
+  if (is.na(lat) || is.na(lon) || abs(lat) > 90 || abs(lon) > 180) {
+    return(NULL)
+  }
+
+  list(
+    lat = lat,
+    lon = lon,
+    label = paste0("coordenada ", round(lat, 6), ", ", round(lon, 6))
   )
 }
