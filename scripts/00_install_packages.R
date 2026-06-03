@@ -8,7 +8,9 @@ packages <- c(
   "yaml",
   "writexl",
   "googlesheets4",
-  "googledrive"
+  "googledrive",
+  "testthat",
+  "shinytest2"
 )
 
 installed <- rownames(installed.packages())

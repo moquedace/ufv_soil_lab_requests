@@ -58,6 +58,7 @@ mod_solicitante_ui <- function(id) {
 mod_solicitante_server <- function(id, app_config, store) {
   moduleServer(id, function(input, output, session) {
     samples <- mod_amostras_server("amostras", app_config)
+    last_submission_id <- reactiveVal("")
 
     request_payload <- reactive({
       list(
@@ -162,12 +163,15 @@ mod_solicitante_server <- function(id, app_config, store) {
         current$analises <- rbind(current$analises, new_analyses)
       }
       store(current)
+      last_submission_id(request_id)
 
       showNotification("Solicitacao registrada no prototipo.", type = "message")
       output$confirmacao <- renderUI({
         div(class = "alert alert-success", paste("Solicitacao enviada:", request_id))
       })
     })
+
+    output$ultimo_envio_id <- renderText(last_submission_id())
   })
 }
 

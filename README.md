@@ -33,3 +33,12 @@ Google Sheets entra depois que validarmos o fluxo das telas.
 No cadastro de amostras, use o campo "Buscar municipio, localidade, referencia
 ou digitar a coordenada" para centralizar o mapa. Ele aceita texto ou coordenada
 decimal, por exemplo `-22.72, -47.65`. Depois clique no ponto da amostra.
+
+## Como rodar os testes
+
+```r
+source("scripts/02_run_tests.R")
+```
+
+Os testes cobrem parsing de coordenadas, exportacao tabular e um fluxo basico
+do Shiny com preenchimento de solicitante, amostra e envio.
