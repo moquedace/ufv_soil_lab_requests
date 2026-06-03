@@ -30,7 +30,7 @@ test_that("solicitante can add and submit a sample", {
   app$click("solicitante-enviar")
 
   expect_match(
-    app$get_value(output = "solicitante-ultimo_envio_id"),
+    app$get_value(export = "solicitante-ultimo_envio_id"),
     "SOL-",
     fixed = TRUE
   )

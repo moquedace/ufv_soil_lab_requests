@@ -171,7 +171,9 @@ mod_solicitante_server <- function(id, app_config, store) {
       })
     })
 
-    output$ultimo_envio_id <- renderText(last_submission_id())
+    exportTestValues(
+      ultimo_envio_id = last_submission_id()
+    )
   })
 }
 
