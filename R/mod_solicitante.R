@@ -116,7 +116,7 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
     exportTestValues(
       review_sample_count = nrow(review_table()),
       review_location_count = count_review_locations(review_table())
-    })
+    )
 
     observeEvent(input$enviar, {
       payload <- request_payload()
