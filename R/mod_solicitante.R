@@ -2,7 +2,7 @@ mod_solicitante_ui <- function(id) {
   ns <- NS(id)
 
   tagList(
-    h2(class = "section-title", "Nova solicitacao"),
+    h2(class = "section-title", "Nova solicitação"),
     p(class = "muted-help", "Preencha os dados do solicitante uma vez e adicione uma ou mais amostras."),
     bslib::layout_columns(
       col_widths = c(6, 6),
@@ -12,28 +12,28 @@ mod_solicitante_ui <- function(id) {
         textInput(ns("email"), "E-mail"),
         textInput(ns("telefone"), "Telefone"),
         textInput(ns("cpf_cnpj"), "CPF/CNPJ"),
-        textInput(ns("endereco"), "Endereco"),
+        textInput(ns("endereco"), "Endereço"),
         bslib::layout_columns(
           textInput(ns("cidade_solicitante"), "Cidade"),
           textInput(ns("uf_solicitante"), "UF", value = "MG")
         )
       ),
       bslib::card(
-        bslib::card_header("Vinculo e observacoes"),
+        bslib::card_header("Vínculo e observações"),
         selectInput(
           ns("vinculo"),
-          "Vinculo",
+          "Vínculo",
           choices = c(
             "Agricultor/produtor" = "agricultor",
-            "Iniciacao cientifica" = "ic",
+            "Iniciação científica" = "ic",
             "Mestrado" = "mestrado",
             "Doutorado" = "doutorado",
             "Outro" = "outro"
           )
         ),
-        textInput(ns("instituicao"), "Instituicao/departamento/laboratorio"),
+        textInput(ns("instituicao"), "Instituição/departamento/laboratório"),
         textInput(ns("orientador"), "Professor/orientador"),
-        textAreaInput(ns("observacoes"), "Observacoes", rows = 4)
+        textAreaInput(ns("observacoes"), "Observações", rows = 4)
       )
     ),
     tags$hr(),
@@ -42,14 +42,14 @@ mod_solicitante_ui <- function(id) {
     bslib::layout_columns(
       col_widths = c(8, 4),
       div(
-        h3("Revisao"),
+        h3("Revisão"),
         div(class = "review-box", uiOutput(ns("resumo"))),
         br(),
         DT::DTOutput(ns("resumo_amostras"))
       ),
       div(
         br(),
-        actionButton(ns("enviar"), "Enviar solicitacao", class = "btn btn-primary"),
+        actionButton(ns("enviar"), "Enviar solicitação", class = "btn btn-primary"),
         br(), br(),
         uiOutput(ns("confirmacao"))
       )
@@ -165,8 +165,22 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
           longitude_wgs84 = sample$longitude_wgs84,
           tipo_localizacao = sample$tipo_localizacao,
           tipo_material = sample$tipo_material,
+          tipo_amostra_vegetal = sample$tipo_amostra_vegetal %||% NA_character_,
+          cultura_planta = sample$cultura_planta %||% NA_character_,
           grupos_analise = paste(sample$grupos_analise, collapse = ";"),
           carbonato_presente = sample$carbonato_presente,
+          percentual_c_estimado = sample$percentual_c_estimado %||% NA_real_,
+          percentual_n_estimado = sample$percentual_n_estimado %||% NA_real_,
+          numero_registro_projeto = sample$numero_registro_projeto %||% NA_character_,
+          elementos_aa_icp = sample$elementos_aa_icp %||% NA_character_,
+          tipo_digestao = sample$tipo_digestao %||% NA_character_,
+          volume_apos_digestao = sample$volume_apos_digestao %||% NA_real_,
+          aliquota = sample$aliquota %||% NA_real_,
+          diluicao = sample$diluicao %||% NA_character_,
+          volume_final = sample$volume_final %||% NA_real_,
+          departamento_origem = sample$departamento_origem %||% NA_character_,
+          projeto_registrado = sample$projeto_registrado %||% NA_character_,
+          numero_registro_projeto_aa = sample$numero_registro_projeto_aa %||% NA_character_,
           pre_tratamento_necessario = sample$pre_tratamento_necessario,
           stringsAsFactors = FALSE
         )
@@ -196,18 +210,18 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
         analises = if (is.null(new_analyses)) data.frame() else new_analyses
       )
 
-      current$solicitacoes <- rbind(current$solicitacoes, new_request)
-      current$amostras <- rbind(current$amostras, new_samples)
+      current$solicitacoes <- safe_rbind(current$solicitacoes, new_request)
+      current$amostras <- safe_rbind(current$amostras, new_samples)
       if (!is.null(new_analyses)) {
-        current$analises <- rbind(current$analises, new_analyses)
+        current$analises <- safe_rbind(current$analises, new_analyses)
       }
       store(current)
       persist_store(new_store)
       last_submission_id(request_id)
 
-      showNotification("Solicitacao registrada no prototipo.", type = "message")
+      showNotification("Solicitação registrada.", type = "message")
       output$confirmacao <- renderUI({
-        div(class = "alert alert-success", paste("Solicitacao enviada:", request_id))
+        div(class = "alert alert-success", paste("Solicitação enviada:", request_id))
       })
     })
 
@@ -223,11 +237,11 @@ build_review_table <- function(samples) {
   data.frame(
     referencia = vapply(samples, `[[`, character(1), "referencia_amostra"),
     material = vapply(samples, `[[`, character(1), "tipo_material"),
-    municipio = vapply(samples, function(sample) paste(sample$municipio_amostra, sample$uf_amostra, sep = "/"), character(1)),
-    localizacao_mapa = vapply(samples, function(sample) if (has_sample_coordinates(sample)) "sim" else "nao", character(1)),
+    municipio = vapply(samples, \(s) { paste(s$municipio_amostra, s$uf_amostra, sep = "/") }, character(1)),
+    localizacao_mapa = vapply(samples, \(s) { if (has_sample_coordinates(s)) "sim" else "nao" }, character(1)),
     precisao = vapply(samples, `[[`, character(1), "tipo_localizacao"),
-    grupos = vapply(samples, function(sample) paste(sample$grupos_analise, collapse = "; "), character(1)),
-    analises = vapply(samples, function(sample) paste(sample$analises_nomes, collapse = "; "), character(1)),
+    grupos = vapply(samples, \(s) { paste(s$grupos_analise, collapse = "; ") }, character(1)),
+    analises = vapply(samples, \(s) { paste(s$analises_nomes, collapse = "; ") }, character(1)),
     stringsAsFactors = FALSE
   )
 }

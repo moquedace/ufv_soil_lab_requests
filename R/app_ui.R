@@ -1,6 +1,6 @@
 app_ui <- function() {
   bslib::page_navbar(
-    title = "Solicitacao de analises - DPS/UFV",
+    title = "Solicitação de análises - DPS/UFV",
     theme = bslib::bs_theme(
       version = 5,
       bootswatch = "flatly",
@@ -69,10 +69,12 @@ app_ui <- function() {
           color: var(--brand-900);
         }
         .btn {
-          border-radius: 8px;
-          font-weight: 750;
+          border-radius: 6px;
+          font-weight: 600;
           border-width: 1px;
           box-shadow: none !important;
+          font-size: .88rem;
+          letter-spacing: .01em;
         }
         .btn-primary {
           background: var(--brand-700);
@@ -96,32 +98,57 @@ app_ui <- function() {
           border-color: var(--brand-700);
           color: #fff;
         }
-        .btn-secondary,
-        .btn-default {
-          background: #eef2f0;
-          border-color: #d5ded9;
-          color: var(--ink-700);
+        .btn-secondary:not(.btn-primary):not(.btn-success):not(.btn-danger),
+        .btn-default:not(.btn-primary):not(.btn-success):not(.btn-danger),
+        .shiny-download-link {
+          background: #f0f4f2 !important;
+          border-color: #ccd7d1 !important;
+          color: var(--ink-700) !important;
         }
-        .btn-secondary:hover,
-        .btn-secondary:focus,
-        .btn-default:hover,
-        .btn-default:focus {
-          background: #e1e8e4;
-          border-color: #cbd7d1;
-          color: var(--ink-900);
+        .btn-secondary:not(.btn-primary):not(.btn-success):not(.btn-danger):hover,
+        .btn-secondary:not(.btn-primary):not(.btn-success):not(.btn-danger):focus,
+        .btn-default:not(.btn-primary):not(.btn-success):not(.btn-danger):hover,
+        .btn-default:not(.btn-primary):not(.btn-success):not(.btn-danger):focus,
+        .shiny-download-link:hover,
+        .shiny-download-link:focus {
+          background: #e0ebe5 !important;
+          border-color: #b8cec6 !important;
+          color: var(--ink-900) !important;
         }
-        .page-link {
-          color: var(--brand-700);
-          border-color: var(--line-soft);
+        .shiny-download-link {
+          display: inline-flex;
+          align-items: center;
+          gap: .35rem;
+          width: 100%;
+          justify-content: center;
+          margin-bottom: .4rem;
         }
-        .page-item.active .page-link {
-          background: var(--brand-700);
-          border-color: var(--brand-700);
-          color: #fff;
+        .page-link,
+        .dataTables_wrapper .paginate_button a.page-link {
+          color: var(--brand-700) !important;
+          border-color: var(--line-soft) !important;
+          background-color: #f5f7f6 !important;
+          background-image: none !important;
         }
-        .page-link:hover {
-          color: var(--brand-900);
-          background: var(--surface-100);
+        .page-item.active .page-link,
+        .dataTables_wrapper .paginate_button.active a.page-link {
+          background-color: var(--brand-700) !important;
+          background-image: none !important;
+          border-color: var(--brand-700) !important;
+          color: #fff !important;
+        }
+        .page-link:hover,
+        .dataTables_wrapper .paginate_button a.page-link:hover {
+          color: var(--brand-900) !important;
+          background-color: var(--surface-100) !important;
+          background-image: none !important;
+        }
+        .page-item.disabled .page-link,
+        .dataTables_wrapper .paginate_button.disabled a.page-link {
+          color: var(--ink-600) !important;
+          background-color: #fafbfa !important;
+          background-image: none !important;
+          opacity: .6;
         }
         .navbar-logos {
           display: flex;
@@ -159,28 +186,48 @@ app_ui <- function() {
           padding: 1.55rem 1.25rem 2.5rem;
         }
         .section-title {
-          margin-bottom: .2rem;
+          margin-bottom: .15rem;
           color: var(--ink-900);
-          font-weight: 850;
+          font-weight: 800;
+          font-size: 1.55rem;
+          letter-spacing: -.01em;
         }
         .section-title + .muted-help {
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.4rem;
         }
         .muted-help {
           color: var(--ink-600);
-          font-size: .94rem;
+          font-size: .91rem;
+        }
+        h3 {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--ink-900);
+          margin-bottom: .75rem;
+        }
+        h4 {
+          font-size: .95rem;
+          font-weight: 700;
+          color: var(--ink-700);
+          text-transform: uppercase;
+          letter-spacing: .05em;
+          margin-bottom: .65rem;
         }
         .card {
           border: 1px solid var(--line-soft);
-          border-radius: 8px;
-          box-shadow: var(--shadow-soft);
+          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(28, 73, 61, .09), 0 1px 2px rgba(0,0,0,.04);
           background: var(--surface-0);
         }
         .card-header {
-          background: #fff;
+          background: var(--surface-50);
           border-bottom: 1px solid var(--line-soft);
-          color: var(--ink-900);
-          font-weight: 800;
+          color: var(--ink-700);
+          font-weight: 700;
+          font-size: .82rem;
+          text-transform: uppercase;
+          letter-spacing: .06em;
+          padding: .65rem 1rem;
         }
         .sample-card {
           border: 1px solid var(--line-soft);
@@ -196,10 +243,11 @@ app_ui <- function() {
         }
         label,
         .control-label {
-          color: var(--ink-900);
-          font-size: .88rem;
-          font-weight: 750;
-          margin-bottom: .3rem;
+          color: var(--ink-700);
+          font-size: .83rem;
+          font-weight: 600;
+          margin-bottom: .25rem;
+          letter-spacing: .01em;
         }
         .form-control,
         .form-select,
@@ -289,6 +337,45 @@ app_ui <- function() {
         table.dataTable tbody tr:hover {
           background: #f5f8f6;
         }
+        .dataTables_wrapper .dataTables_paginate .paginate_button,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+          border-radius: 6px !important;
+          border: 1px solid var(--line-soft) !important;
+          background: #f5f7f6 !important;
+          background-image: none !important;
+          color: var(--brand-700) !important;
+          padding: .28rem .6rem !important;
+          margin: 0 2px;
+          font-size: .84rem;
+          box-shadow: none !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
+          background: var(--surface-100) !important;
+          background-image: none !important;
+          border-color: #b8cec6 !important;
+          color: var(--brand-900) !important;
+          box-shadow: none !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+          background: var(--brand-700) !important;
+          background-image: none !important;
+          border-color: var(--brand-700) !important;
+          color: #fff !important;
+          box-shadow: none !important;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+          background: #fafbfa !important;
+          background-image: none !important;
+          border-color: var(--line-soft) !important;
+          color: var(--ink-600) !important;
+          opacity: .55;
+          box-shadow: none !important;
+        }
         .alert {
           border-radius: 8px;
           border: 1px solid rgba(176, 138, 46, .36);
@@ -315,11 +402,11 @@ app_ui <- function() {
       )
     ),
     bslib::nav_panel(
-      "Solicitar analise",
+      "Solicitar análise",
       div(class = "page-wrap", mod_solicitante_ui("solicitante"))
     ),
     bslib::nav_panel(
-      "Recepcao",
+      "Recepção",
       div(class = "page-wrap", mod_recepcao_ui("recepcao"))
     ),
     bslib::nav_spacer(),

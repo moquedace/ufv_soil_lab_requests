@@ -2,30 +2,30 @@ mod_recepcao_ui <- function(id) {
   ns <- NS(id)
 
   tagList(
-    h2(class = "section-title", "Recepcao de amostras"),
-    p(class = "muted-help", "Consulte solicitacoes, filtre por grupo de analise e exporte os dados recebidos."),
+    h2(class = "section-title", "Recepção de amostras"),
+    p(class = "muted-help", "Consulte solicitações, filtre por grupo de análise e exporte os dados recebidos."),
     bslib::layout_columns(
       col_widths = c(8, 4),
       bslib::card(
         bslib::card_header("Filtros"),
-        textInput(ns("busca"), "Buscar", placeholder = "Solicitante, municipio, amostra, analise..."),
+        textInput(ns("busca"), "Buscar", placeholder = "Solicitante, município, amostra, análise..."),
         bslib::layout_columns(
           selectInput(ns("status"), "Status", choices = c("Todos" = "todos")),
-          selectInput(ns("laboratorio"), "Grupo de analise", choices = c("Todos" = "todos"))
+          selectInput(ns("laboratorio"), "Grupo de análise", choices = c("Todos" = "todos"))
         )
       ),
       bslib::card(
         bslib::card_header("Resumo"),
         verbatimTextOutput(ns("resumo_store")),
         tags$hr(),
-        downloadButton(ns("baixar_csv"), "CSV filtrado"),
-        downloadButton(ns("baixar_xlsx"), "XLSX filtrado")
+        downloadButton(ns("baixar_csv"), "Exportar CSV"),
+        downloadButton(ns("baixar_xlsx"), "Exportar XLSX")
       )
     ),
     bslib::layout_columns(
       col_widths = c(7, 5),
       bslib::card(
-        bslib::card_header("Solicitacoes"),
+        bslib::card_header("Solicitações"),
         DT::DTOutput(ns("solicitacoes"))
       ),
       bslib::card(
@@ -35,29 +35,29 @@ mod_recepcao_ui <- function(id) {
         h4("Campos internos"),
         bslib::layout_columns(
           textInput(ns("data_entrada_lab"), "Data de entrada"),
-          textInput(ns("numero_laboratorio"), "Numero de laboratorio")
+          textInput(ns("numero_laboratorio"), "N° de laboratório")
         ),
         bslib::layout_columns(
-          textInput(ns("custo_total_lab"), "Custo total"),
-          textInput(ns("pedido_numero_lab"), "Pedido numero")
+          textInput(ns("custo_total_lab"), "Custo total (R$)"),
+          textInput(ns("pedido_numero_lab"), "N° do pedido")
         ),
         selectInput(
           ns("status_interno_edit"),
-          "Status interno",
-          choices = c("Recebida", "Aguardando amostra", "Em analise", "Finalizada", "Cancelada", "Teste")
+          "Status",
+          choices = c("Recebida", "Aguardando amostra", "Em análise", "Finalizada", "Cancelada", "Teste")
         ),
         selectInput(
           ns("forma_pagamento_lab"),
           "Forma de pagamento",
-          choices = c("", "PIX", "SIF", "FACEV", "FUNARBE", "Boleto", "Nota Fiscal", "Boleto c/ nota", "Transferencia entre convenios")
+          choices = c("", "PIX", "SIF", "FACEV", "FUNARBE", "Boleto", "Nota Fiscal", "Boleto c/ nota", "Transferência entre convênios")
         ),
-        textAreaInput(ns("observacoes_internas"), "Observacoes internas", rows = 3),
+        textAreaInput(ns("observacoes_internas"), "Observações internas", rows = 3),
         actionButton(ns("salvar_interno"), "Salvar campos internos", class = "btn btn-primary"),
         uiOutput(ns("salvar_feedback"))
       )
     ),
     bslib::card(
-      bslib::card_header("Amostras por analise"),
+      bslib::card_header("Amostras por análise"),
       DT::DTOutput(ns("analises"))
     )
   )
@@ -75,7 +75,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
 
       labs <- sort(unique(current$analises$laboratorio))
       labs <- labs[!is.na(labs) & nzchar(labs)]
-      lab_labels <- stats::setNames(labs, vapply(labs, function(lab) {
+      lab_labels <- stats::setNames(labs, vapply(labs, \(lab) {
         app_config$analises[[lab]]$nome %||% lab
       }, character(1)))
       updateSelectInput(session, "laboratorio", choices = c("Todos" = "todos", lab_labels))
@@ -110,25 +110,53 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
     })
 
     output$solicitacoes <- DT::renderDT({
-      request_data()
+      data <- request_data()
+      label_map <- c(
+        solicitacao_id = "ID",
+        data_hora_envio = "Data/Hora",
+        nome_solicitante = "Solicitante",
+        cidade_solicitante = "Município",
+        status_interno = "Status"
+      )
+      cols <- intersect(names(label_map), names(data))
+      if (length(cols)) {
+        data <- data[, cols, drop = FALSE]
+        names(data) <- label_map[names(data)]
+      }
+      data
     }, selection = "single", options = list(pageLength = 8, order = list(list(1, "desc"))))
 
     output$analises <- DT::renderDT({
-      analysis_data()
+      data <- analysis_data()
+      label_map <- c(
+        referencia_amostra = "Amostra",
+        laboratorio = "Laboratório",
+        analise_nome = "Análise",
+        nome_solicitante = "Solicitante",
+        municipio_amostra = "Município",
+        uf_amostra = "UF",
+        status_interno = "Status"
+      )
+      cols <- intersect(names(label_map), names(data))
+      if (length(cols)) {
+        data <- data[, cols, drop = FALSE]
+        names(data) <- label_map[names(data)]
+      }
+      data
     }, options = list(pageLength = 8, scrollX = TRUE))
 
     output$resumo_store <- renderPrint({
       data <- analysis_data()
-      cat("Solicitacoes filtradas:", length(unique(data$solicitacao_id)), "\n")
-      cat("Amostras filtradas:", length(unique(data$amostra_id)), "\n")
-      cat("Analises filtradas:", nrow(data), "\n")
+      cat("Solicitações:", length(unique(data$solicitacao_id)), "\n")
+      cat("Amostras:", length(unique(data$amostra_id)), "\n")
+      cat("Análises:", nrow(data), "\n")
     })
 
     output$detalhe_solicitacao <- renderUI({
       selected <- input$solicitacoes_rows_selected
       requests <- request_data()
       if (!length(selected) || !nrow(requests)) {
-        return(p(class = "muted-help", "Selecione uma solicitacao na tabela."))
+        return(p(class = "muted-help", "Selecione uma linha na tabela para ver o detalhe."))
       }
 
       request <- requests[selected[1], , drop = FALSE]
@@ -176,7 +204,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
     observeEvent(input$salvar_interno, {
       request <- selected_request()
       if (is.null(request)) {
-        showNotification("Selecione uma solicitacao antes de salvar.", type = "warning")
+        showNotification("Selecione uma solicitação antes de salvar.", type = "warning")
         return()
       }
 
@@ -185,7 +213,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
       row <- current$solicitacoes$solicitacao_id == request_id
 
       if (!any(row)) {
-        showNotification("Solicitacao nao encontrada no armazenamento atual.", type = "error")
+        showNotification("Solicitação não encontrada.", type = "error")
         return()
       }
 
@@ -206,7 +234,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
       store(current)
       persist_requests(current$solicitacoes)
       last_saved_request(request_id)
-      showNotification("Campos internos salvos.", type = "message")
+      showNotification("Campos internos salvos com sucesso.", type = "message")
     })
 
     output$salvar_feedback <- renderUI({
@@ -214,7 +242,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
         return(NULL)
       }
 
-      div(class = "alert alert-success", paste("Ultima solicitacao salva:", last_saved_request()))
+      div(class = "alert alert-success", paste("Última solicitação salva:", last_saved_request()))
     })
 
     exportTestValues(
