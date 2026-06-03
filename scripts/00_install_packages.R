@@ -2,6 +2,7 @@ packages <- c(
   "shiny",
   "bslib",
   "leaflet",
+  "leaflet.extras",
   "DT",
   "yaml",
   "writexl",

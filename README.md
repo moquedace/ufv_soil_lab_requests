@@ -29,3 +29,7 @@ source("scripts/01_run_app.R")
 
 O prototipo inicial ainda usa dados simulados em memoria. A integracao com
 Google Sheets entra depois que validarmos o fluxo das telas.
+
+No cadastro de amostras, o mapa possui uma busca no canto superior esquerdo.
+Digite um municipio ou localidade, aguarde o mapa centralizar e depois clique no
+ponto da amostra.

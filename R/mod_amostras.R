@@ -98,7 +98,16 @@ mod_amostras_server <- function(id, app_config) {
     output$mapa <- leaflet::renderLeaflet({
       leaflet::leaflet() |>
         leaflet::addProviderTiles(leaflet::providers$OpenStreetMap) |>
-        leaflet::setView(lng = -42.8825, lat = -20.7546, zoom = 10)
+        leaflet::setView(lng = -42.8825, lat = -20.7546, zoom = 10) |>
+        leaflet.extras::addSearchOSM(
+          options = leaflet.extras::searchOptions(
+            position = "topleft",
+            textPlaceholder = "Buscar municipio, localidade ou referencia",
+            zoom = 13,
+            hideMarkerOnCollapse = TRUE,
+            autoCollapse = TRUE
+          )
+        )
     })
 
     observeEvent(input$mapa_click, {
