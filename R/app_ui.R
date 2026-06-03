@@ -28,6 +28,59 @@ app_ui <- function() {
         .navbar .nav-link:hover {
           color: #f2d58a !important;
         }
+        .btn-primary {
+          background-color: #7a4d2b;
+          border-color: #7a4d2b;
+          color: #fff;
+        }
+        .btn-primary:hover,
+        .btn-primary:focus {
+          background-color: #5f3b22;
+          border-color: #5f3b22;
+          color: #fff;
+        }
+        .btn-outline-primary {
+          color: #7a4d2b;
+          border-color: #7a4d2b;
+        }
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus {
+          background-color: #7a4d2b;
+          border-color: #7a4d2b;
+          color: #fff;
+        }
+        .btn-secondary,
+        .btn-default {
+          background-color: #d7c4ad;
+          border-color: #c8b297;
+          color: #3b2a1d;
+        }
+        .btn-secondary:hover,
+        .btn-secondary:focus,
+        .btn-default:hover,
+        .btn-default:focus {
+          background-color: #c4aa88;
+          border-color: #b99a75;
+          color: #2d1c11;
+        }
+        .page-link {
+          color: #7a4d2b;
+        }
+        .page-item.active .page-link {
+          background-color: #7a4d2b;
+          border-color: #7a4d2b;
+          color: #fff;
+        }
+        .page-link:hover {
+          color: #5f3b22;
+          background-color: #f4eadc;
+        }
+        a {
+          color: #7a4d2b;
+        }
+        a:hover {
+          color: #5f3b22;
+        }
         .navbar-logos {
           display: flex;
           align-items: center;

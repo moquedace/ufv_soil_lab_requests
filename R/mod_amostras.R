@@ -64,7 +64,7 @@ mod_amostras_ui <- function(id) {
             selected = "aproximada"
           ),
           verbatimTextOutput(ns("coords")),
-          actionButton(ns("usar_anterior"), "Usar local da ultima amostra"),
+          actionButton(ns("usar_anterior"), "Usar local da ultima amostra", class = "btn btn-secondary"),
           actionButton(ns("adicionar"), "Adicionar amostra", class = "btn btn-primary")
         )
       )
