@@ -30,3 +30,15 @@ test_that("replace_sample_at updates the selected sample", {
   expect_equal(result[[1]]$referencia_amostra, "Amostra 1")
   expect_equal(result[[2]]$referencia_amostra, "Amostra editada")
 })
+
+test_that("selected_sample_index falls back to hidden test index", {
+  input <- list(
+    tabela_amostras_rows_selected = integer(),
+    test_selected_sample_index = 2
+  )
+
+  expect_equal(selected_sample_index(input), 2L)
+
+  input$tabela_amostras_rows_selected <- 1
+  expect_equal(selected_sample_index(input), 1)
+})

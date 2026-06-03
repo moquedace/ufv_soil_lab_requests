@@ -89,11 +89,11 @@ test_that("solicitante can duplicate and remove samples before submit", {
   app$click("solicitante-amostras-adicionar")
   app$wait_for_idle()
 
-  app$set_inputs(`solicitante-amostras-tabela_amostras_rows_selected` = 1)
+  app$set_inputs(`solicitante-amostras-test_selected_sample_index` = 1)
   app$click("solicitante-amostras-duplicar_amostra")
   app$wait_for_idle()
 
-  app$set_inputs(`solicitante-amostras-tabela_amostras_rows_selected` = 1)
+  app$set_inputs(`solicitante-amostras-test_selected_sample_index` = 1)
   app$click("solicitante-amostras-remover_amostra")
   app$wait_for_idle()
 
@@ -123,7 +123,7 @@ test_that("solicitante can edit a sample before submit", {
   app$click("solicitante-amostras-adicionar")
   app$wait_for_idle()
 
-  app$set_inputs(`solicitante-amostras-tabela_amostras_rows_selected` = 1)
+  app$set_inputs(`solicitante-amostras-test_selected_sample_index` = 1)
   app$wait_for_idle()
   app$click("solicitante-amostras-editar_amostra")
   app$wait_for_value(export = "solicitante-amostras-editing_index", ignore = NULL)

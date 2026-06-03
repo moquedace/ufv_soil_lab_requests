@@ -70,6 +70,10 @@ mod_amostras_ui <- function(id) {
       )
     ),
     h4("Amostras adicionadas"),
+    tags$div(
+      style = "display: none;",
+      numericInput(ns("test_selected_sample_index"), "Indice de teste", value = NA_integer_)
+    ),
     bslib::layout_columns(
       col_widths = c(3, 3, 3, 3),
       actionButton(ns("editar_amostra"), "Editar selecionada", class = "btn btn-secondary"),
@@ -224,7 +228,7 @@ mod_amostras_server <- function(id, app_config) {
     })
 
     observeEvent(input$editar_amostra, {
-      selected <- input$tabela_amostras_rows_selected
+      selected <- selected_sample_index(input)
       current <- samples()
 
       if (!length(selected) || !length(current)) {
@@ -260,7 +264,7 @@ mod_amostras_server <- function(id, app_config) {
     })
 
     observeEvent(input$duplicar_amostra, {
-      selected <- input$tabela_amostras_rows_selected
+      selected <- selected_sample_index(input)
       current <- samples()
 
       if (!length(selected) || !length(current)) {
@@ -273,7 +277,7 @@ mod_amostras_server <- function(id, app_config) {
     })
 
     observeEvent(input$remover_amostra, {
-      selected <- input$tabela_amostras_rows_selected
+      selected <- selected_sample_index(input)
       current <- samples()
 
       if (!length(selected) || !length(current)) {
@@ -332,6 +336,20 @@ duplicate_sample_at <- function(samples, index) {
   duplicated <- samples[[index]]
   duplicated$referencia_amostra <- paste(duplicated$referencia_amostra, "copia")
   append(samples, list(duplicated))
+}
+
+selected_sample_index <- function(input) {
+  selected <- input$tabela_amostras_rows_selected
+  if (length(selected)) {
+    return(selected)
+  }
+
+  test_selected <- input$test_selected_sample_index
+  if (!is.null(test_selected) && length(test_selected) && !is.na(test_selected)) {
+    return(as.integer(test_selected))
+  }
+
+  integer()
 }
 
 replace_sample_at <- function(samples, index, sample) {
