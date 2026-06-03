@@ -63,6 +63,10 @@ test_that("solicitante can add and submit one sample with multiple groups", {
 
   app$click("solicitante-amostras-adicionar")
   app$wait_for_idle()
+
+  expect_equal(app$get_value(export = "solicitante-review_sample_count"), 1)
+  expect_equal(app$get_value(export = "solicitante-review_location_count"), 1)
+
   app$click("solicitante-enviar")
   app$wait_for_idle()
 

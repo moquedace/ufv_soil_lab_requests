@@ -43,7 +43,9 @@ mod_solicitante_ui <- function(id) {
       col_widths = c(8, 4),
       div(
         h3("Revisao"),
-        div(class = "review-box", verbatimTextOutput(ns("resumo")))
+        div(class = "review-box", uiOutput(ns("resumo"))),
+        br(),
+        DT::DTOutput(ns("resumo_amostras"))
       ),
       div(
         br(),
@@ -79,17 +81,41 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
       )
     })
 
-    output$resumo <- renderPrint({
-      payload <- request_payload()
-      cat("Solicitante:", payload$solicitante$nome_solicitante %||% "", "\n")
-      cat("Contato:", payload$solicitante$email %||% "", payload$solicitante$telefone %||% "", "\n")
-      cat("Amostras cadastradas:", length(payload$amostras), "\n\n")
+    review_table <- reactive({
+      build_review_table(request_payload()$amostras)
+    })
 
-      for (sample in payload$amostras) {
-        cat(sample$referencia_amostra, "-", sample$tipo_material, "\n")
-        cat("Municipio:", sample$municipio_amostra, "/", sample$uf_amostra, "\n")
-        cat("Analises:", paste(sample$analises_nomes, collapse = "; "), "\n\n")
+    output$resumo <- renderUI({
+      payload <- request_payload()
+      sample_count <- length(payload$amostras)
+      location_count <- sum(vapply(payload$amostras, has_sample_coordinates, logical(1)))
+
+      tagList(
+        tags$dl(
+          tags$dt("Solicitante"),
+          tags$dd(payload$solicitante$nome_solicitante %||% "Nao informado"),
+          tags$dt("Contato"),
+          tags$dd(paste(payload$solicitante$email %||% "", payload$solicitante$telefone %||% "")),
+          tags$dt("Amostras"),
+          tags$dd(sample_count),
+          tags$dt("Amostras com ponto no mapa"),
+          tags$dd(paste0(location_count, " de ", sample_count))
+        )
+      )
+    })
+
+    output$resumo_amostras <- DT::renderDT({
+      table <- review_table()
+      if (!nrow(table)) {
+        return(data.frame(Mensagem = "Nenhuma amostra adicionada."))
       }
+
+      table
+    }, options = list(pageLength = 5, searching = FALSE, scrollX = TRUE))
+
+    exportTestValues(
+      review_sample_count = nrow(review_table()),
+      review_location_count = count_review_locations(review_table())
     })
 
     observeEvent(input$enviar, {
@@ -185,8 +211,38 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
       })
     })
 
-    exportTestValues(
-      ultimo_envio_id = last_submission_id()
-    )
+    exportTestValues(ultimo_envio_id = last_submission_id())
   })
+}
+
+build_review_table <- function(samples) {
+  if (!length(samples)) {
+    return(data.frame())
+  }
+
+  data.frame(
+    referencia = vapply(samples, `[[`, character(1), "referencia_amostra"),
+    material = vapply(samples, `[[`, character(1), "tipo_material"),
+    municipio = vapply(samples, function(sample) paste(sample$municipio_amostra, sample$uf_amostra, sep = "/"), character(1)),
+    localizacao_mapa = vapply(samples, function(sample) if (has_sample_coordinates(sample)) "sim" else "nao", character(1)),
+    precisao = vapply(samples, `[[`, character(1), "tipo_localizacao"),
+    grupos = vapply(samples, function(sample) paste(sample$grupos_analise, collapse = "; "), character(1)),
+    analises = vapply(samples, function(sample) paste(sample$analises_nomes, collapse = "; "), character(1)),
+    stringsAsFactors = FALSE
+  )
+}
+
+has_sample_coordinates <- function(sample) {
+  !is.null(sample$latitude_wgs84) &&
+    !is.null(sample$longitude_wgs84) &&
+    !is.na(sample$latitude_wgs84) &&
+    !is.na(sample$longitude_wgs84)
+}
+
+count_review_locations <- function(review_table) {
+  if (!nrow(review_table) || !"localizacao_mapa" %in% names(review_table)) {
+    return(0L)
+  }
+
+  sum(review_table$localizacao_mapa == "sim")
 }
