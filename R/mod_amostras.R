@@ -28,6 +28,14 @@ mod_amostras_ui <- function(id) {
       uiOutput(ns("analises_ui")),
       uiOutput(ns("chn_ui")),
       bslib::layout_columns(
+        col_widths = c(8, 4),
+        textInput(ns("busca_lugar"), "Buscar municipio, localidade ou referencia"),
+        div(
+          br(),
+          actionButton(ns("buscar_lugar"), "Buscar no mapa", class = "btn btn-outline-primary")
+        )
+      ),
+      bslib::layout_columns(
         col_widths = c(4, 2, 6),
         textInput(ns("municipio_amostra"), "Municipio da amostra"),
         textInput(ns("uf_amostra"), "UF", value = "MG"),
@@ -98,16 +106,26 @@ mod_amostras_server <- function(id, app_config) {
     output$mapa <- leaflet::renderLeaflet({
       leaflet::leaflet() |>
         leaflet::addProviderTiles(leaflet::providers$OpenStreetMap) |>
-        leaflet::setView(lng = -42.8825, lat = -20.7546, zoom = 10) |>
-        leaflet.extras::addSearchOSM(
-          options = leaflet.extras::searchOptions(
-            position = "topleft",
-            textPlaceholder = "Buscar municipio, localidade ou referencia",
-            zoom = 13,
-            hideMarkerOnCollapse = TRUE,
-            autoCollapse = TRUE
-          )
-        )
+        leaflet::setView(lng = -42.8825, lat = -20.7546, zoom = 10)
+    })
+
+    observeEvent(input$buscar_lugar, {
+      query <- trimws(input$busca_lugar %||% "")
+      if (!nzchar(query)) {
+        showNotification("Digite um municipio, localidade ou referencia para buscar.", type = "warning")
+        return()
+      }
+
+      result <- geocode_osm(query)
+      if (is.null(result)) {
+        showNotification("Nao encontrei esse local. Tente incluir municipio, UF ou Brasil.", type = "warning")
+        return()
+      }
+
+      leaflet::leafletProxy("mapa") |>
+        leaflet::setView(lng = result$lon, lat = result$lat, zoom = 13)
+
+      showNotification(paste("Mapa centralizado em:", result$label), type = "message")
     })
 
     observeEvent(input$mapa_click, {
@@ -209,4 +227,41 @@ mod_amostras_server <- function(id, app_config) {
 
     samples
   })
+}
+
+geocode_osm <- function(query) {
+  if (!requireNamespace("httr2", quietly = TRUE) || !requireNamespace("jsonlite", quietly = TRUE)) {
+    showNotification("Instale os pacotes 'httr2' e 'jsonlite' para usar a busca.", type = "error")
+    return(NULL)
+  }
+
+  response <- tryCatch(
+    httr2::request("https://nominatim.openstreetmap.org/search") |>
+      httr2::req_url_query(
+        q = query,
+        format = "json",
+        limit = 1,
+        countrycodes = "br"
+      ) |>
+      httr2::req_headers(
+        "User-Agent" = "ufv-soil-lab-requests/0.1 (Shiny prototype)"
+      ) |>
+      httr2::req_perform(),
+    error = function(error) NULL
+  )
+
+  if (is.null(response) || httr2::resp_status(response) >= 300) {
+    return(NULL)
+  }
+
+  data <- httr2::resp_body_json(response, simplifyVector = TRUE)
+  if (!is.data.frame(data) || nrow(data) < 1) {
+    return(NULL)
+  }
+
+  list(
+    lat = as.numeric(data$lat[[1]]),
+    lon = as.numeric(data$lon[[1]]),
+    label = data$display_name[[1]]
+  )
 }
