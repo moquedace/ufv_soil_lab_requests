@@ -261,3 +261,29 @@ clean_google_test_records <- function(confirm = FALSE, sheet_id = google_sheet_i
   message("Limpeza gravada no Google Sheets.")
   invisible(result)
 }
+
+clear_google_store <- function(confirm = FALSE, sheet_id = google_sheet_id()) {
+  store <- read_google_store(sheet_id)
+  rows <- list(
+    solicitacoes = nrow(store$solicitacoes),
+    amostras = nrow(store$amostras),
+    analises_amostra = nrow(store$analises)
+  )
+
+  message("Linhas atuais na planilha:")
+  message("  solicitacoes: ", rows$solicitacoes)
+  message("  amostras: ", rows$amostras)
+  message("  analises_amostra: ", rows$analises_amostra)
+
+  if (!confirm) {
+    message("Modo previa. Rode clear_google_store(confirm = TRUE) para apagar todas as linhas e manter apenas cabecalhos.")
+    return(invisible(rows))
+  }
+
+  write_google_sheet(sheet_id, "solicitacoes", empty_sheet_data("solicitacoes"))
+  write_google_sheet(sheet_id, "amostras", empty_sheet_data("amostras"))
+  write_google_sheet(sheet_id, "analises_amostra", empty_sheet_data("analises_amostra"))
+
+  message("Planilha limpa. Cabecalhos preservados.")
+  invisible(rows)
+}

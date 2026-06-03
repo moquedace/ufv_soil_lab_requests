@@ -102,3 +102,10 @@ Se a lista estiver correta, confirme a limpeza:
 ```r
 clean_google_test_records(confirm = TRUE)
 ```
+
+Para apagar todos os dados do piloto e manter apenas os cabecalhos das abas:
+
+```r
+source("scripts/06_clear_google_sheets_all.R")
+clear_google_store(confirm = TRUE)
+```

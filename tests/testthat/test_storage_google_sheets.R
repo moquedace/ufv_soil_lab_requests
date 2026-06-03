@@ -62,3 +62,11 @@ test_that("remove_test_records removes linked test rows only", {
   expect_false("TESTE-GS-001" %in% result$store$solicitacoes$solicitacao_id)
   expect_true("SOL-20260603-0001" %in% result$store$solicitacoes$solicitacao_id)
 })
+
+test_that("empty sheet data for all sheets preserves schemas", {
+  for (sheet in sheet_names) {
+    data <- empty_sheet_data(sheet)
+    expect_equal(nrow(data), 0)
+    expect_equal(names(data), sheet_columns[[sheet]])
+  }
+})
