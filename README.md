@@ -43,6 +43,9 @@ decimal, por exemplo `-22.72, -47.65`. Depois clique no ponto da amostra.
 Uma mesma amostra pode ser associada a varios grupos de analise. Marque os
 grupos desejados e, em seguida, selecione as analises dentro de cada grupo.
 
+Na aba `Recepcao`, os filtros de busca/status/grupo de analise tambem definem o
+conteudo exportado nos arquivos CSV e XLSX.
+
 ## Como rodar os testes
 
 ```r
