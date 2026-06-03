@@ -17,3 +17,15 @@ Substituir o fluxo inicial em papel por um formulario web simples, com historico
 ## Documentacao
 
 - `docs/especificacao_mvp.md`: especificacao inicial do MVP.
+
+## Como rodar localmente
+
+No RStudio, abra esta pasta como projeto/diretorio de trabalho e rode:
+
+```r
+source("scripts/00_install_packages.R")
+source("scripts/01_run_app.R")
+```
+
+O prototipo inicial ainda usa dados simulados em memoria. A integracao com
+Google Sheets entra depois que validarmos o fluxo das telas.

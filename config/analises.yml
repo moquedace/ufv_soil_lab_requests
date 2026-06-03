@@ -1,0 +1,74 @@
+analises:
+  solo_rotina:
+    nome: Solo rotina
+    opcoes:
+      - id: rotina_basica
+        nome: "Rotina: pH, P, K, Ca, Mg, Al, H + Al e P-rem"
+      - id: materia_organica
+        nome: "Materia organica"
+      - id: micronutrientes_fe_zn_mn_cu
+        nome: "Fe-Zn-Mn-Cu"
+      - id: enxofre
+        nome: "Enxofre"
+      - id: boro
+        nome: "Boro"
+      - id: sodio
+        nome: "Sodio"
+      - id: ph_kcl
+        nome: "pH em KCl"
+      - id: metais_ni_cd_cr_pb
+        nome: "Ni-Cd-Cr-Pb"
+      - id: nitrogenio_total
+        nome: "Nitrogenio total"
+      - id: textura
+        nome: "Analise granulometrica/textura"
+      - id: argila_dispersa
+        nome: "Argila dispersa em agua"
+      - id: equivalente_umidade
+        nome: "Equivalente de umidade"
+      - id: densidade_solo
+        nome: "Densidade do solo"
+      - id: densidade_particulas
+        nome: "Densidade de particulas"
+      - id: porosidade
+        nome: "Porosidade"
+      - id: retencao_agua
+        nome: "Retencao de agua"
+  vegetal:
+    nome: Vegetal
+    opcoes:
+      - id: nitrogenio
+        nome: "Nitrogenio"
+      - id: p_k_ca_mg
+        nome: "P+K+Ca+Mg"
+      - id: enxofre
+        nome: "Enxofre"
+      - id: zn_mn_fe_cu
+        nome: "Zn-Mn-Fe-Cu"
+      - id: boro
+        nome: "Boro"
+      - id: sodio
+        nome: "Sodio"
+      - id: cr_ni_cd_pb
+        nome: "Cr-Ni-Cd-Pb"
+      - id: carbono_chn
+        nome: "Carbono - metodo CHN"
+  chn:
+    nome: CHN
+    opcoes:
+      - id: carbono_total
+        nome: "Carbono total"
+      - id: carbono_organico_total
+        nome: "Carbono organico total"
+      - id: nitrogenio
+        nome: "Nitrogenio"
+  absorcao_atomica:
+    nome: Absorcao atomica
+    opcoes:
+      - id: elementos_absorcao_atomica
+        nome: "Elementos por absorcao atomica"
+  icp_oes:
+    nome: ICP-OES
+    opcoes:
+      - id: elementos_icp_oes
+        nome: "Elementos por ICP-OES"
