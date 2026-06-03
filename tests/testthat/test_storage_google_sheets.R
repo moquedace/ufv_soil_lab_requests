@@ -34,3 +34,31 @@ test_that("empty_sheet_data creates the expected columns", {
   expect_equal(nrow(data), 0)
   expect_equal(names(data), sheet_columns$amostras)
 })
+
+test_that("remove_test_records removes linked test rows only", {
+  store <- sample_store()
+  test_request <- store$solicitacoes
+  test_request$solicitacao_id <- "TESTE-GS-001"
+  test_request$nome_solicitante <- "TESTE AUTOMATICO - NAO USAR"
+
+  test_sample <- store$amostras
+  test_sample$solicitacao_id <- "TESTE-GS-001"
+  test_sample$amostra_id <- "TESTE-GS-001-AMS-001"
+
+  test_analysis <- store$analises
+  test_analysis$amostra_id <- "TESTE-GS-001-AMS-001"
+
+  mixed <- list(
+    solicitacoes = rbind(store$solicitacoes, test_request),
+    amostras = rbind(store$amostras, test_sample),
+    analises = rbind(store$analises, test_analysis)
+  )
+
+  result <- remove_test_records(mixed)
+
+  expect_equal(result$removed$solicitacoes, 1)
+  expect_equal(result$removed$amostras, 1)
+  expect_equal(result$removed$analises, 1)
+  expect_false("TESTE-GS-001" %in% result$store$solicitacoes$solicitacao_id)
+  expect_true("SOL-20260603-0001" %in% result$store$solicitacoes$solicitacao_id)
+})

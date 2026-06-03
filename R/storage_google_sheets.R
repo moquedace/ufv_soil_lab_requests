@@ -188,3 +188,76 @@ append_google_rows <- function(sheet_id, sheet, data) {
   googlesheets4::sheet_append(sheet_id, data = data, sheet = sheet)
   invisible(TRUE)
 }
+
+detect_test_request_ids <- function(solicitacoes) {
+  if (!nrow(solicitacoes)) {
+    return(character())
+  }
+
+  fields <- intersect(
+    c("solicitacao_id", "nome_solicitante", "email", "observacoes_internas", "status_interno"),
+    names(solicitacoes)
+  )
+
+  haystack <- apply(solicitacoes[, fields, drop = FALSE], 1, function(row) {
+    paste(toupper(as.character(row)), collapse = " ")
+  })
+
+  solicitacoes$solicitacao_id[grepl("TESTE|AUTOMATICO|AUTOMATIZADO|TEST-", haystack)]
+}
+
+remove_test_records <- function(store) {
+  test_request_ids <- detect_test_request_ids(store$solicitacoes)
+
+  if (!length(test_request_ids)) {
+    return(list(
+      store = store,
+      removed = list(solicitacoes = 0, amostras = 0, analises = 0),
+      test_request_ids = character()
+    ))
+  }
+
+  test_sample_ids <- store$amostras$amostra_id[store$amostras$solicitacao_id %in% test_request_ids]
+
+  cleaned <- list(
+    solicitacoes = store$solicitacoes[!store$solicitacoes$solicitacao_id %in% test_request_ids, , drop = FALSE],
+    amostras = store$amostras[!store$amostras$solicitacao_id %in% test_request_ids, , drop = FALSE],
+    analises = store$analises[!store$analises$amostra_id %in% test_sample_ids, , drop = FALSE]
+  )
+
+  list(
+    store = cleaned,
+    removed = list(
+      solicitacoes = nrow(store$solicitacoes) - nrow(cleaned$solicitacoes),
+      amostras = nrow(store$amostras) - nrow(cleaned$amostras),
+      analises = nrow(store$analises) - nrow(cleaned$analises)
+    ),
+    test_request_ids = test_request_ids
+  )
+}
+
+clean_google_test_records <- function(confirm = FALSE, sheet_id = google_sheet_id()) {
+  store <- read_google_store(sheet_id)
+  result <- remove_test_records(store)
+
+  message("Solicitacoes de teste encontradas: ", length(result$test_request_ids))
+  if (length(result$test_request_ids)) {
+    message("IDs: ", paste(result$test_request_ids, collapse = ", "))
+  }
+  message("Linhas que seriam removidas:")
+  message("  solicitacoes: ", result$removed$solicitacoes)
+  message("  amostras: ", result$removed$amostras)
+  message("  analises_amostra: ", result$removed$analises)
+
+  if (!confirm) {
+    message("Modo previa. Rode clean_google_test_records(confirm = TRUE) para gravar a limpeza.")
+    return(invisible(result))
+  }
+
+  write_google_sheet(sheet_id, "solicitacoes", result$store$solicitacoes)
+  write_google_sheet(sheet_id, "amostras", result$store$amostras)
+  write_google_sheet(sheet_id, "analises_amostra", result$store$analises)
+
+  message("Limpeza gravada no Google Sheets.")
+  invisible(result)
+}

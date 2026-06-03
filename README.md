@@ -90,3 +90,15 @@ source("scripts/04_test_google_sheets_write.R")
 Esse teste grava uma solicitacao fake marcada como `TESTE AUTOMATICO - NAO USAR`
 e valida a leitura de volta. Ele nao faz parte da suite comum para evitar
 escritas acidentais a cada execucao.
+
+Para limpar registros de teste da planilha, rode primeiro a previa:
+
+```r
+source("scripts/05_clean_google_sheets_tests.R")
+```
+
+Se a lista estiver correta, confirme a limpeza:
+
+```r
+clean_google_test_records(confirm = TRUE)
+```
