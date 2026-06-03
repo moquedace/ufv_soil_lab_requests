@@ -7,35 +7,37 @@ mod_amostras_ui <- function(id) {
       class = "sample-card",
       bslib::layout_columns(
         col_widths = c(7, 5),
-        textInput(ns("referencia_amostra"), "Referencia da amostra"),
+        textInput(ns("referencia_amostra"), "Referência da amostra"),
         selectInput(
           ns("tipo_material"),
           "Material",
-          choices = c("Solo", "Vegetal", "Extrato/digestao", "Outro")
+          choices = c("Solo", "Vegetal", "Extrato/digestão", "Outro")
         )
       ),
       checkboxGroupInput(
         ns("grupos_analise"),
-        "Grupos de analise para esta amostra",
+        "Grupos de análise para esta amostra",
         choices = c(
           "Solo rotina" = "solo_rotina",
           "Vegetal" = "vegetal",
           "CHN" = "chn",
-          "Absorcao atomica" = "absorcao_atomica",
+          "Absorção atômica" = "absorcao_atomica",
           "ICP-OES" = "icp_oes"
         ),
         selected = "solo_rotina",
         inline = TRUE
       ),
       uiOutput(ns("analises_ui")),
+      uiOutput(ns("vegetal_ui")),
       uiOutput(ns("chn_ui")),
+      uiOutput(ns("aa_icp_ui")),
       bslib::layout_columns(
         col_widths = c(8, 4),
         div(
-          textInput(ns("busca_lugar"), "Buscar municipio, localidade, referencia ou digitar a coordenada"),
+          textInput(ns("busca_lugar"), "Buscar município, localidade ou digitar coordenada"),
           p(
             class = "muted-help",
-            "Exemplo de coordenada: -22.7253, -47.6492. Use latitude primeiro e longitude depois."
+            "Exemplo: -22.7253, -47.6492 (latitude, longitude em decimal)."
           )
         ),
         div(
@@ -45,9 +47,9 @@ mod_amostras_ui <- function(id) {
       ),
       bslib::layout_columns(
         col_widths = c(4, 2, 6),
-        textInput(ns("municipio_amostra"), "Municipio da amostra"),
+        textInput(ns("municipio_amostra"), "Município da amostra"),
         textInput(ns("uf_amostra"), "UF", value = "MG"),
-        textInput(ns("localidade_descricao"), "Propriedade, comunidade, talhao ou referencia")
+        textInput(ns("localidade_descricao"), "Propriedade, comunidade, talhão ou referência")
       ),
       bslib::layout_columns(
         col_widths = c(8, 4),
@@ -59,12 +61,12 @@ mod_amostras_ui <- function(id) {
             choices = c(
               "Local exato da coleta" = "exata",
               "Local aproximado da coleta" = "aproximada",
-              "Apenas municipio/regiao" = "municipio_regiao"
+              "Apenas município/região" = "municipio_regiao"
             ),
             selected = "aproximada"
           ),
           verbatimTextOutput(ns("coords")),
-          actionButton(ns("usar_anterior"), "Usar local da ultima amostra", class = "btn btn-secondary"),
+          actionButton(ns("usar_anterior"), "Usar local da última amostra", class = "btn btn-secondary"),
           uiOutput(ns("acao_amostra_ui"))
         )
       )
@@ -110,7 +112,7 @@ mod_amostras_server <- function(id, app_config) {
         return(p(class = "muted-help", "Selecione pelo menos um grupo de analise."))
       }
 
-      tagList(lapply(groups, function(group_id) {
+      tagList(lapply(groups, \(group_id) {
         choices <- analysis_choices(app_config, group_id)
         group_name <- app_config$analises[[group_id]]$nome %||% group_id
 
@@ -123,6 +125,29 @@ mod_amostras_server <- function(id, app_config) {
       }))
     })
 
+    output$vegetal_ui <- renderUI({
+      if (!("vegetal" %in% (input$grupos_analise %||% character()))) {
+        return(NULL)
+      }
+
+      tagList(
+        selectInput(
+          session$ns("tipo_amostra_vegetal"),
+          "Tipo de amostra vegetal",
+          choices = c(
+            "Selecione..." = "",
+            "Folha" = "folha",
+            "Galho" = "galho",
+            "Casca" = "casca",
+            "Raiz" = "raiz",
+            "Serrapilheira" = "serrapilheira",
+            "Outro" = "outro"
+          )
+        ),
+        textInput(session$ns("cultura_planta"), "Cultura/planta")
+      )
+    })
+
     output$chn_ui <- renderUI({
       if (!("chn" %in% (input$grupos_analise %||% character()))) {
         return(NULL)
@@ -131,16 +156,70 @@ mod_amostras_server <- function(id, app_config) {
       tagList(
         radioButtons(
           session$ns("carbonato_presente"),
-          "Presenca ou suspeita de carbono proveniente de carbonato",
-          choices = c("Sim" = "sim", "Nao" = "nao", "Nao sei" = "nao_sei"),
+          "Presença ou suspeita de carbono proveniente de carbonato",
+          choices = c("Sim" = "sim", "Não" = "nao", "Não sei" = "nao_sei"),
           inline = TRUE
         ),
         conditionalPanel(
           condition = sprintf("(input['%s'] || []).includes('carbono_organico_total')", session$ns("analises_chn")),
           div(
             class = "alert alert-warning",
-            "Carbono organico total requer pre-tratamento da amostra antes da determinacao."
+            "Carbono orgânico total requer pré-tratamento da amostra antes da determinação."
           )
+        ),
+        bslib::layout_columns(
+          numericInput(session$ns("percentual_c_estimado"), "%C estimado (opcional)", value = NA, min = 0, max = 100, step = 0.1),
+          numericInput(session$ns("percentual_n_estimado"), "%N estimado (opcional)", value = NA, min = 0, max = 100, step = 0.1)
+        ),
+        textInput(session$ns("numero_registro_projeto"), "N° de registro do projeto (opcional)")
+      )
+    })
+
+    output$aa_icp_ui <- renderUI({
+      groups <- input$grupos_analise %||% character()
+      is_aa  <- "absorcao_atomica" %in% groups
+      is_icp <- "icp_oes" %in% groups
+
+      if (!is_aa && !is_icp) {
+        return(NULL)
+      }
+
+      tagList(
+        if (is_icp) {
+          div(
+            class = "alert",
+            style = "background:#f0f4f2; border-color:#ccd7d1; color:#3f4b47;",
+            tags$strong("Equipamento: ICP-OES OPTIMA 8300."),
+            " Amostras devem ser entregues em solução após digestão. Consulte o laboratório para dúvidas sobre preparo."
+          )
+        },
+        textInput(session$ns("elementos_aa_icp"), "Elementos a determinar",
+          placeholder = "Ex: Ca, Mg, Fe, Mn, Cu, Zn"),
+        textInput(session$ns("tipo_digestao"), "Tipo de digestão realizada",
+          placeholder = "Ex: nítrico-perclórica, água régia, DTPA"),
+        bslib::layout_columns(
+          numericInput(session$ns("volume_apos_digestao"), "Volume após digestão (mL)", value = NA, min = 0),
+          numericInput(session$ns("aliquota"), "Alíquota (mL)", value = NA, min = 0)
+        ),
+        bslib::layout_columns(
+          textInput(session$ns("diluicao"), "Diluição", placeholder = "Ex: 1:10"),
+          numericInput(session$ns("volume_final"), "Volume final (mL)", value = NA, min = 0)
+        ),
+        selectInput(
+          session$ns("departamento_origem"),
+          "Departamento de origem",
+          choices = c("DPS - Solos UFV" = "dps", "Outro departamento/instituição" = "outro")
+        ),
+        radioButtons(
+          session$ns("projeto_registrado"),
+          "Projeto de pesquisa registrado?",
+          choices = c("Sim" = "sim", "Não" = "nao"),
+          selected = "nao",
+          inline = TRUE
+        ),
+        conditionalPanel(
+          condition = sprintf("input['%s'] === 'sim'", session$ns("projeto_registrado")),
+          textInput(session$ns("numero_registro_projeto_aa"), "N° de registro do projeto")
         )
       )
     })
@@ -297,14 +376,16 @@ mod_amostras_server <- function(id, app_config) {
         return(data.frame(Mensagem = "Nenhuma amostra adicionada."))
       }
 
+      grupos_str <- vapply(current, \(s) { paste(s$grupos_analise, collapse = "; ") }, character(1))
+      analises_str <- vapply(current, \(s) { paste(s$analises_nomes, collapse = "; ") }, character(1))
       data.frame(
         Referencia = vapply(current, `[[`, character(1), "referencia_amostra"),
         Material = vapply(current, `[[`, character(1), "tipo_material"),
-        Grupos = vapply(current, function(sample) paste(sample$grupos_analise, collapse = "; "), character(1)),
+        Grupos = grupos_str,
         Municipio = vapply(current, `[[`, character(1), "municipio_amostra"),
         UF = vapply(current, `[[`, character(1), "uf_amostra"),
         Localizacao = vapply(current, `[[`, character(1), "tipo_localizacao"),
-        Analises = vapply(current, function(sample) paste(sample$analises_nomes, collapse = "; "), character(1)),
+        Analises = analises_str,
         stringsAsFactors = FALSE
       )
     }, selection = "single", options = list(pageLength = 5, searching = FALSE))
@@ -386,6 +467,29 @@ build_sample_from_inputs <- function(input, app_config, point) {
   groups <- input$grupos_analise %||% character()
   analyses <- collect_selected_analyses(input, app_config, groups)
 
+  is_vegetal <- "vegetal" %in% groups
+  is_chn     <- "chn" %in% groups
+  is_aa_icp  <- "absorcao_atomica" %in% groups || "icp_oes" %in% groups
+
+  tipo_amostra_vegetal <- if (is_vegetal) (input$tipo_amostra_vegetal %||% "") else NA_character_
+  cultura_planta <- if (is_vegetal) (input$cultura_planta %||% "") else NA_character_
+  carbonato_presente      <- if (is_chn) input$carbonato_presente else NA_character_
+  percentual_c_estimado   <- if (is_chn) input$percentual_c_estimado else NA_real_
+  percentual_n_estimado   <- if (is_chn) input$percentual_n_estimado else NA_real_
+  numero_registro_projeto    <- if (is_chn) (input$numero_registro_projeto %||% "") else NA_character_
+  elementos_aa_icp           <- if (is_aa_icp) (input$elementos_aa_icp %||% "") else NA_character_
+  tipo_digestao              <- if (is_aa_icp) (input$tipo_digestao %||% "") else NA_character_
+  volume_apos_digestao       <- if (is_aa_icp) input$volume_apos_digestao else NA_real_
+  aliquota                   <- if (is_aa_icp) input$aliquota else NA_real_
+  diluicao                   <- if (is_aa_icp) (input$diluicao %||% "") else NA_character_
+  volume_final               <- if (is_aa_icp) input$volume_final else NA_real_
+  departamento_origem        <- if (is_aa_icp) (input$departamento_origem %||% "") else NA_character_
+  projeto_registrado         <- if (is_aa_icp) (input$projeto_registrado %||% "nao") else NA_character_
+  numero_registro_projeto_aa <- if (is_aa_icp && identical(input$projeto_registrado, "sim")) (input$numero_registro_projeto_aa %||% "") else NA_character_
+
+  lat_wgs84 <- if (is.null(point)) NA_real_ else point$lat
+  lng_wgs84 <- if (is.null(point)) NA_real_ else point$lng
+
   list(
     referencia_amostra = input$referencia_amostra,
     tipo_material = input$tipo_material,
@@ -396,10 +500,24 @@ build_sample_from_inputs <- function(input, app_config, point) {
     municipio_amostra = input$municipio_amostra,
     uf_amostra = input$uf_amostra,
     localidade_descricao = input$localidade_descricao,
-    latitude_wgs84 = if (is.null(point)) NA_real_ else point$lat,
-    longitude_wgs84 = if (is.null(point)) NA_real_ else point$lng,
+    latitude_wgs84 = lat_wgs84,
+    longitude_wgs84 = lng_wgs84,
     tipo_localizacao = input$tipo_localizacao,
-    carbonato_presente = if ("chn" %in% groups) input$carbonato_presente else NA_character_,
+    tipo_amostra_vegetal = tipo_amostra_vegetal,
+    cultura_planta = cultura_planta,
+    carbonato_presente = carbonato_presente,
+    percentual_c_estimado = percentual_c_estimado,
+    percentual_n_estimado = percentual_n_estimado,
+    numero_registro_projeto = numero_registro_projeto,
+    elementos_aa_icp = elementos_aa_icp,
+    tipo_digestao = tipo_digestao,
+    volume_apos_digestao = volume_apos_digestao,
+    aliquota = aliquota,
+    diluicao = diluicao,
+    volume_final = volume_final,
+    departamento_origem = departamento_origem,
+    projeto_registrado = projeto_registrado,
+    numero_registro_projeto_aa = numero_registro_projeto_aa,
     pre_tratamento_necessario = "carbono_organico_total" %in% analyses$analise_id
   )
 }
@@ -447,22 +565,42 @@ load_sample_into_form <- function(session, sample, marker) {
   }
 
   later::later(function() {
-    for (group_id in sample$grupos_analise) {
+    lapply(sample$grupos_analise, \(group_id) {
       updateCheckboxGroupInput(
         session,
         paste0("analises_", group_id),
         selected = sample$analises$analise_id[sample$analises$laboratorio == group_id]
       )
+    })
+
+    if ("vegetal" %in% sample$grupos_analise) {
+      updateSelectInput(session, "tipo_amostra_vegetal", selected = sample$tipo_amostra_vegetal %||% "")
+      updateTextInput(session, "cultura_planta", value = sample$cultura_planta %||% "")
+    }
+
+    if ("absorcao_atomica" %in% sample$grupos_analise || "icp_oes" %in% sample$grupos_analise) {
+      updateTextInput(session, "elementos_aa_icp",    value = sample$elementos_aa_icp %||% "")
+      updateTextInput(session, "tipo_digestao",        value = sample$tipo_digestao %||% "")
+      updateNumericInput(session, "volume_apos_digestao", value = sample$volume_apos_digestao %||% NA)
+      updateNumericInput(session, "aliquota",          value = sample$aliquota %||% NA)
+      updateTextInput(session, "diluicao",             value = sample$diluicao %||% "")
+      updateNumericInput(session, "volume_final",      value = sample$volume_final %||% NA)
+      updateSelectInput(session, "departamento_origem", selected = sample$departamento_origem %||% "dps")
+      updateRadioButtons(session, "projeto_registrado", selected = sample$projeto_registrado %||% "nao")
+      updateTextInput(session, "numero_registro_projeto_aa", value = sample$numero_registro_projeto_aa %||% "")
     }
 
     if ("chn" %in% sample$grupos_analise) {
       updateRadioButtons(session, "carbonato_presente", selected = sample$carbonato_presente)
+      updateNumericInput(session, "percentual_c_estimado", value = sample$percentual_c_estimado %||% NA)
+      updateNumericInput(session, "percentual_n_estimado", value = sample$percentual_n_estimado %||% NA)
+      updateTextInput(session, "numero_registro_projeto", value = sample$numero_registro_projeto %||% "")
     }
   }, delay = 0.1)
 }
 
 collect_selected_analyses <- function(input, app_config, groups) {
-  rows <- lapply(groups, function(group_id) {
+  rows <- lapply(groups, \(group_id) {
     selected <- input[[paste0("analises_", group_id)]] %||% character()
     if (!length(selected)) {
       return(NULL)
@@ -508,7 +646,7 @@ geocode_osm <- function(query) {
         "User-Agent" = "ufv-soil-lab-requests/0.1 (Shiny prototype)"
       ) |>
       httr2::req_perform(),
-    error = function(error) NULL
+    error = function(e) { NULL }
   )
 
   if (is.null(response) || httr2::resp_status(response) >= 300) {

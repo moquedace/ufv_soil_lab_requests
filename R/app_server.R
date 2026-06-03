@@ -34,8 +34,8 @@ load_initial_store <- function() {
 
   tryCatch(
     read_google_store(),
-    error = function(error) {
-      warning("Nao foi possivel ler o Google Sheets. Usando dados simulados. Erro: ", conditionMessage(error))
+    error = function(e) {
+      warning("Nao foi possivel ler o Google Sheets. Usando dados simulados. Erro: ", conditionMessage(e))
       sample_store()
     }
   )
@@ -52,8 +52,8 @@ persist_new_store <- function(new_store) {
 
   tryCatch(
     append_google_store(new_store),
-    error = function(error) {
-      warning("Nao foi possivel gravar no Google Sheets: ", conditionMessage(error))
+    error = function(e) {
+      warning("Nao foi possivel gravar no Google Sheets: ", conditionMessage(e))
       FALSE
     }
   )
@@ -70,8 +70,8 @@ persist_requests_store <- function(solicitacoes) {
 
   tryCatch(
     write_google_sheet(google_sheet_id(), "solicitacoes", solicitacoes),
-    error = function(error) {
-      warning("Nao foi possivel atualizar solicitacoes no Google Sheets: ", conditionMessage(error))
+    error = function(e) {
+      warning("Nao foi possivel atualizar solicitacoes no Google Sheets: ", conditionMessage(e))
       FALSE
     }
   )

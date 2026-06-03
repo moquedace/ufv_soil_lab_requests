@@ -51,6 +51,15 @@ sample_store <- function() {
   )
 }
 
+safe_rbind <- function(a, b) {
+  if (!nrow(a)) return(b)
+  if (!nrow(b)) return(a)
+  all_cols <- union(names(a), names(b))
+  for (col in setdiff(all_cols, names(a))) a[[col]] <- NA
+  for (col in setdiff(all_cols, names(b))) b[[col]] <- NA
+  rbind(a[, all_cols, drop = FALSE], b[, all_cols, drop = FALSE])
+}
+
 next_request_id <- function() {
   paste0("SOL-", format(Sys.time(), "%Y%m%d-%H%M%S"))
 }

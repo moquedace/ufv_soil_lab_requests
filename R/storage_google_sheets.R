@@ -143,7 +143,7 @@ read_google_sheet_raw <- function(sheet_id, sheet) {
 
   data <- tryCatch(
     googlesheets4::read_sheet(sheet_id, sheet = sheet, .name_repair = "minimal"),
-    error = function(error) NULL
+    error = function(e) { NULL }
   )
 
   if (is.null(data)) {
@@ -200,7 +200,7 @@ detect_test_request_ids <- function(solicitacoes) {
     names(solicitacoes)
   )
 
-  haystack <- apply(solicitacoes[, fields, drop = FALSE], 1, function(row) {
+  haystack <- apply(solicitacoes[, fields, drop = FALSE], 1, \(row) {
     paste(toupper(as.character(row)), collapse = " ")
   })
 

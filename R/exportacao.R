@@ -44,7 +44,7 @@ filter_reception_data <- function(data, search = "", status = "todos", laborator
 
   if (nzchar(search)) {
     text <- tolower(search)
-    haystack <- apply(filtered, 1, function(row) paste(tolower(as.character(row)), collapse = " "))
+    haystack <- apply(filtered, 1, \(row) { paste(tolower(as.character(row)), collapse = " ") })
     filtered <- filtered[grepl(text, haystack, fixed = TRUE), , drop = FALSE]
   }
 
