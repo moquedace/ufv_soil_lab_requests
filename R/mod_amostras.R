@@ -29,7 +29,13 @@ mod_amostras_ui <- function(id) {
       uiOutput(ns("chn_ui")),
       bslib::layout_columns(
         col_widths = c(8, 4),
-        textInput(ns("busca_lugar"), "Buscar municipio, localidade, referencia ou digitar a coordenada"),
+        div(
+          textInput(ns("busca_lugar"), "Buscar municipio, localidade, referencia ou digitar a coordenada"),
+          p(
+            class = "muted-help",
+            "Exemplo de coordenada: -22.7253, -47.6492. Use latitude primeiro e longitude depois."
+          )
+        ),
         div(
           br(),
           actionButton(ns("buscar_lugar"), "Buscar no mapa", class = "btn btn-outline-primary")
