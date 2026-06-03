@@ -72,3 +72,13 @@ source("scripts/01_run_app.R")
 
 Na primeira execucao, o pacote `googlesheets4` pode abrir o fluxo de
 autenticacao da sua conta Google.
+
+Para testar escrita real na planilha, rode:
+
+```r
+source("scripts/04_test_google_sheets_write.R")
+```
+
+Esse teste grava uma solicitacao fake marcada como `TESTE AUTOMATICO - NAO USAR`
+e valida a leitura de volta. Ele nao faz parte da suite comum para evitar
+escritas acidentais a cada execucao.
