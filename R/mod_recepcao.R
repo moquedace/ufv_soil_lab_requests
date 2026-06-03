@@ -189,14 +189,19 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
         return()
       }
 
-      current$solicitacoes <- ensure_request_internal_columns(current$solicitacoes)
-      current$solicitacoes[row, "data_entrada_lab"] <- input$data_entrada_lab
-      current$solicitacoes[row, "numero_laboratorio"] <- input$numero_laboratorio
-      current$solicitacoes[row, "custo_total_lab"] <- input$custo_total_lab
-      current$solicitacoes[row, "forma_pagamento_lab"] <- input$forma_pagamento_lab
-      current$solicitacoes[row, "pedido_numero_lab"] <- input$pedido_numero_lab
-      current$solicitacoes[row, "observacoes_internas"] <- input$observacoes_internas
-      current$solicitacoes[row, "status_interno"] <- input$status_interno_edit
+      current$solicitacoes <- update_request_internal_fields(
+        solicitacoes = current$solicitacoes,
+        request_id = request_id,
+        values = list(
+          data_entrada_lab = input$data_entrada_lab,
+          numero_laboratorio = input$numero_laboratorio,
+          custo_total_lab = input$custo_total_lab,
+          forma_pagamento_lab = input$forma_pagamento_lab,
+          pedido_numero_lab = input$pedido_numero_lab,
+          observacoes_internas = input$observacoes_internas,
+          status_interno = input$status_interno_edit
+        )
+      )
 
       store(current)
       persist_requests(current$solicitacoes)
@@ -258,4 +263,29 @@ ensure_request_internal_columns <- function(data) {
   }
 
   data
+}
+
+update_request_internal_fields <- function(solicitacoes, request_id, values) {
+  solicitacoes <- ensure_request_internal_columns(solicitacoes)
+  row <- solicitacoes$solicitacao_id == request_id
+
+  if (!any(row)) {
+    return(solicitacoes)
+  }
+
+  editable <- c(
+    "data_entrada_lab",
+    "numero_laboratorio",
+    "custo_total_lab",
+    "forma_pagamento_lab",
+    "pedido_numero_lab",
+    "observacoes_internas",
+    "status_interno"
+  )
+
+  for (field in intersect(names(values), editable)) {
+    solicitacoes[row, field] <- values[[field]]
+  }
+
+  solicitacoes
 }
