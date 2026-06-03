@@ -14,6 +14,10 @@ load_project_env <- function(path = ".Renviron") {
   invisible(TRUE)
 }
 
+is_test_mode <- function() {
+  identical(tolower(Sys.getenv("UFV_SOIL_LAB_TEST_MODE", "false")), "true")
+}
+
 choice_labels <- function(items) {
   stats::setNames(
     vapply(items, function(item) item$id, character(1)),

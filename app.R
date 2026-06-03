@@ -1,7 +1,9 @@
 library(shiny)
 
 source("R/config.R")
-if (!identical(Sys.getenv("UFV_SOIL_LAB_TEST_MODE", "false"), "true")) {
+if (is_test_mode()) {
+  Sys.setenv(USE_GOOGLE_SHEETS = "false")
+} else {
   load_project_env()
 }
 

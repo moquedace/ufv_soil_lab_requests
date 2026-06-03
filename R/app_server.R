@@ -24,6 +24,10 @@ app_server <- function(input, output, session) {
 }
 
 load_initial_store <- function() {
+  if (is_test_mode()) {
+    return(sample_store())
+  }
+
   if (!use_google_sheets()) {
     return(sample_store())
   }
@@ -38,6 +42,10 @@ load_initial_store <- function() {
 }
 
 persist_new_store <- function(new_store) {
+  if (is_test_mode()) {
+    return(invisible(FALSE))
+  }
+
   if (!use_google_sheets()) {
     return(invisible(FALSE))
   }
@@ -52,6 +60,10 @@ persist_new_store <- function(new_store) {
 }
 
 persist_requests_store <- function(solicitacoes) {
+  if (is_test_mode()) {
+    return(invisible(FALSE))
+  }
+
   if (!use_google_sheets()) {
     return(invisible(FALSE))
   }
