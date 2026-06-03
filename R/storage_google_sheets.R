@@ -163,6 +163,7 @@ write_google_sheet <- function(sheet_id, sheet, data) {
   }
 
   data <- data[, columns, drop = FALSE]
+  googlesheets4::range_clear(ss = sheet_id, sheet = sheet)
   googlesheets4::range_write(
     ss = sheet_id,
     data = data,

@@ -109,3 +109,6 @@ Para apagar todos os dados do piloto e manter apenas os cabecalhos das abas:
 source("scripts/06_clear_google_sheets_all.R")
 clear_google_store(confirm = TRUE)
 ```
+
+Esse comando limpa as linhas antigas das tres abas antes de reescrever os
+cabecalhos.
