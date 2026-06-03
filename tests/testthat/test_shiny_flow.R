@@ -124,8 +124,10 @@ test_that("solicitante can edit a sample before submit", {
   app$wait_for_idle()
 
   app$set_inputs(`solicitante-amostras-tabela_amostras_rows_selected` = 1)
-  app$click("solicitante-amostras-editar_amostra")
   app$wait_for_idle()
+  app$click("solicitante-amostras-editar_amostra")
+  app$wait_for_value(export = "solicitante-amostras-editing_index", ignore = NULL)
+  expect_equal(app$get_value(export = "solicitante-amostras-editing_index"), 1)
 
   app$set_inputs(`solicitante-amostras-referencia_amostra` = "Amostra editada")
   app$click("solicitante-amostras-atualizar_amostra")

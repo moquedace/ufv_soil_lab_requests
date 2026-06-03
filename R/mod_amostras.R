@@ -303,6 +303,11 @@ mod_amostras_server <- function(id, app_config) {
       )
     }, selection = "single", options = list(pageLength = 5, searching = FALSE))
 
+    exportTestValues(
+      editing_index = editing_index(),
+      samples_count = length(samples())
+    )
+
     samples
   })
 }
