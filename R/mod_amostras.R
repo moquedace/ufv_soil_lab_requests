@@ -6,24 +6,26 @@ mod_amostras_ui <- function(id) {
     div(
       class = "sample-card",
       bslib::layout_columns(
-        col_widths = c(5, 3, 4),
+        col_widths = c(7, 5),
         textInput(ns("referencia_amostra"), "Referencia da amostra"),
         selectInput(
           ns("tipo_material"),
           "Material",
           choices = c("Solo", "Vegetal", "Extrato/digestao", "Outro")
-        ),
-        selectInput(
-          ns("laboratorio"),
-          "Grupo de analise",
-          choices = c(
-            "Solo rotina" = "solo_rotina",
-            "Vegetal" = "vegetal",
-            "CHN" = "chn",
-            "Absorcao atomica" = "absorcao_atomica",
-            "ICP-OES" = "icp_oes"
-          )
         )
+      ),
+      checkboxGroupInput(
+        ns("grupos_analise"),
+        "Grupos de analise para esta amostra",
+        choices = c(
+          "Solo rotina" = "solo_rotina",
+          "Vegetal" = "vegetal",
+          "CHN" = "chn",
+          "Absorcao atomica" = "absorcao_atomica",
+          "ICP-OES" = "icp_oes"
+        ),
+        selected = "solo_rotina",
+        inline = TRUE
       ),
       uiOutput(ns("analises_ui")),
       uiOutput(ns("chn_ui")),
@@ -78,17 +80,26 @@ mod_amostras_server <- function(id, app_config) {
     samples <- reactiveVal(list())
 
     output$analises_ui <- renderUI({
-      choices <- analysis_choices(app_config, input$laboratorio)
-      checkboxGroupInput(
-        session$ns("analises"),
-        "Analises solicitadas",
-        choices = choices,
-        selected = character()
-      )
+      groups <- input$grupos_analise %||% character()
+      if (!length(groups)) {
+        return(p(class = "muted-help", "Selecione pelo menos um grupo de analise."))
+      }
+
+      tagList(lapply(groups, function(group_id) {
+        choices <- analysis_choices(app_config, group_id)
+        group_name <- app_config$analises[[group_id]]$nome %||% group_id
+
+        checkboxGroupInput(
+          session$ns(paste0("analises_", group_id)),
+          paste("Analises -", group_name),
+          choices = choices,
+          selected = character()
+        )
+      }))
     })
 
     output$chn_ui <- renderUI({
-      if (!identical(input$laboratorio, "chn")) {
+      if (!("chn" %in% (input$grupos_analise %||% character()))) {
         return(NULL)
       }
 
@@ -100,7 +111,7 @@ mod_amostras_server <- function(id, app_config) {
           inline = TRUE
         ),
         conditionalPanel(
-          condition = sprintf("(input['%s'] || []).includes('carbono_organico_total')", session$ns("analises")),
+          condition = sprintf("(input['%s'] || []).includes('carbono_organico_total')", session$ns("analises_chn")),
           div(
             class = "alert alert-warning",
             "Carbono organico total requer pre-tratamento da amostra antes da determinacao."
@@ -194,23 +205,34 @@ mod_amostras_server <- function(id, app_config) {
       }
 
       point <- marker()
-      selected <- input$analises %||% character()
-      choices <- analysis_choices(app_config, input$laboratorio)
+      groups <- input$grupos_analise %||% character()
+      analyses <- collect_selected_analyses(input, app_config, groups)
+
+      if (!length(groups)) {
+        showNotification("Selecione pelo menos um grupo de analise.", type = "error")
+        return()
+      }
+
+      if (!nrow(analyses)) {
+        showNotification("Marque pelo menos uma analise para a amostra.", type = "error")
+        return()
+      }
 
       sample <- list(
         referencia_amostra = input$referencia_amostra,
         tipo_material = input$tipo_material,
-        laboratorio = input$laboratorio,
-        analises_ids = selected,
-        analises_nomes = unname(names(choices)[match(selected, choices)]),
+        grupos_analise = groups,
+        analises = analyses,
+        analises_ids = analyses$analise_id,
+        analises_nomes = analyses$analise_nome,
         municipio_amostra = input$municipio_amostra,
         uf_amostra = input$uf_amostra,
         localidade_descricao = input$localidade_descricao,
         latitude_wgs84 = if (is.null(point)) NA_real_ else point$lat,
         longitude_wgs84 = if (is.null(point)) NA_real_ else point$lng,
         tipo_localizacao = input$tipo_localizacao,
-        carbonato_presente = if (identical(input$laboratorio, "chn")) input$carbonato_presente else NA_character_,
-        pre_tratamento_necessario = "carbono_organico_total" %in% selected
+        carbonato_presente = if ("chn" %in% groups) input$carbonato_presente else NA_character_,
+        pre_tratamento_necessario = "carbono_organico_total" %in% analyses$analise_id
       )
 
       samples(append(samples(), list(sample)))
@@ -227,6 +249,7 @@ mod_amostras_server <- function(id, app_config) {
       data.frame(
         Referencia = vapply(current, `[[`, character(1), "referencia_amostra"),
         Material = vapply(current, `[[`, character(1), "tipo_material"),
+        Grupos = vapply(current, function(sample) paste(sample$grupos_analise, collapse = "; "), character(1)),
         Municipio = vapply(current, `[[`, character(1), "municipio_amostra"),
         UF = vapply(current, `[[`, character(1), "uf_amostra"),
         Localizacao = vapply(current, `[[`, character(1), "tipo_localizacao"),
@@ -237,6 +260,35 @@ mod_amostras_server <- function(id, app_config) {
 
     samples
   })
+}
+
+collect_selected_analyses <- function(input, app_config, groups) {
+  rows <- lapply(groups, function(group_id) {
+    selected <- input[[paste0("analises_", group_id)]] %||% character()
+    if (!length(selected)) {
+      return(NULL)
+    }
+
+    choices <- analysis_choices(app_config, group_id)
+    data.frame(
+      laboratorio = group_id,
+      analise_id = selected,
+      analise_nome = unname(names(choices)[match(selected, choices)]),
+      stringsAsFactors = FALSE
+    )
+  })
+
+  rows <- Filter(Negate(is.null), rows)
+  if (!length(rows)) {
+    return(data.frame(
+      laboratorio = character(),
+      analise_id = character(),
+      analise_nome = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  do.call(rbind, rows)
 }
 
 geocode_osm <- function(query) {

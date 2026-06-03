@@ -34,6 +34,9 @@ No cadastro de amostras, use o campo "Buscar municipio, localidade, referencia
 ou digitar a coordenada" para centralizar o mapa. Ele aceita texto ou coordenada
 decimal, por exemplo `-22.72, -47.65`. Depois clique no ponto da amostra.
 
+Uma mesma amostra pode ser associada a varios grupos de analise. Marque os
+grupos desejados e, em seguida, selecione as analises dentro de cada grupo.
+
 ## Como rodar os testes
 
 ```r

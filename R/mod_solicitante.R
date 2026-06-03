@@ -133,6 +133,7 @@ mod_solicitante_server <- function(id, app_config, store) {
           longitude_wgs84 = sample$longitude_wgs84,
           tipo_localizacao = sample$tipo_localizacao,
           tipo_material = sample$tipo_material,
+          grupos_analise = paste(sample$grupos_analise, collapse = ";"),
           carbonato_presente = sample$carbonato_presente,
           pre_tratamento_necessario = sample$pre_tratamento_necessario,
           stringsAsFactors = FALSE
@@ -141,16 +142,16 @@ mod_solicitante_server <- function(id, app_config, store) {
 
       analysis_rows <- lapply(seq_along(payload$amostras), function(index) {
         sample <- payload$amostras[[index]]
-        if (!length(sample$analises_ids)) {
+        if (!nrow(sample$analises)) {
           return(NULL)
         }
 
         amostra_id <- new_samples$amostra_id[index]
         data.frame(
           amostra_id = amostra_id,
-          laboratorio = sample$laboratorio,
-          analise_id = sample$analises_ids,
-          analise_nome = sample$analises_nomes,
+          laboratorio = sample$analises$laboratorio,
+          analise_id = sample$analises$analise_id,
+          analise_nome = sample$analises$analise_nome,
           stringsAsFactors = FALSE
         )
       })
@@ -175,8 +176,4 @@ mod_solicitante_server <- function(id, app_config, store) {
       ultimo_envio_id = last_submission_id()
     )
   })
-}
-
-`%||%` <- function(value, fallback) {
-  if (is.null(value)) fallback else value
 }

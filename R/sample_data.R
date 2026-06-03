@@ -30,6 +30,7 @@ sample_store <- function() {
       longitude_wgs84 = -42.8825,
       tipo_localizacao = "aproximada",
       tipo_material = "Solo",
+      grupos_analise = "solo_rotina",
       carbonato_presente = NA_character_,
       pre_tratamento_necessario = FALSE,
       stringsAsFactors = FALSE

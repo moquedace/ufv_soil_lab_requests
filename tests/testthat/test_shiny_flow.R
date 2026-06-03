@@ -15,14 +15,16 @@ test_that("solicitante can add and submit a sample", {
     `solicitante-cidade_solicitante` = "Vicosa",
     `solicitante-amostras-referencia_amostra` = "Amostra teste 0-20 cm",
     `solicitante-amostras-tipo_material` = "Solo",
-    `solicitante-amostras-laboratorio` = "solo_rotina",
+    `solicitante-amostras-grupos_analise` = c("solo_rotina", "vegetal"),
     `solicitante-amostras-municipio_amostra` = "Vicosa",
     `solicitante-amostras-uf_amostra` = "MG",
     `solicitante-amostras-localidade_descricao` = "Talhao teste"
   )
+  app$wait_for_idle()
 
   app$set_inputs(
-    `solicitante-amostras-analises` = "rotina_basica",
+    `solicitante-amostras-analises_solo_rotina` = "rotina_basica",
+    `solicitante-amostras-analises_vegetal` = "nitrogenio",
     `solicitante-amostras-mapa_click` = list(lat = -20.7546, lng = -42.8825)
   )
 

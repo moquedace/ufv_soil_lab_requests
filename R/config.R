@@ -21,3 +21,7 @@ analysis_choices <- function(app_config, group_id) {
 
   choice_labels(group$opcoes)
 }
+
+`%||%` <- function(value, fallback) {
+  if (is.null(value)) fallback else value
+}
