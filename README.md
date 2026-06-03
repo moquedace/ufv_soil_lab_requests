@@ -1,9 +1,9 @@
 ﻿# UFV Soil Lab Requests
 
 <p align="center">
-  <img src="www/img/logo_ufv.png" alt="Universidade Federal de Vicosa" width="360">
-  <br>
-  <img src="www/img/logo_dps_ufv.png" alt="Departamento de Solos UFV" width="280">
+  <img src="www/img/logo_ufv.png" alt="Universidade Federal de Vicosa" width="310">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="www/img/logo_dps_ufv.png" alt="Departamento de Solos UFV" width="230">
 </p>
 
 Aplicacao web em R/Shiny para solicitacao de analises de amostras do Departamento de Solos da UFV.
