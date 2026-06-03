@@ -6,6 +6,14 @@ load_app_config <- function(path = "config/analises.yml") {
   yaml::read_yaml(path)
 }
 
+load_project_env <- function(path = ".Renviron") {
+  if (file.exists(path)) {
+    readRenviron(path)
+  }
+
+  invisible(TRUE)
+}
+
 choice_labels <- function(items) {
   stats::setNames(
     vapply(items, function(item) item$id, character(1)),

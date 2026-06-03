@@ -63,6 +63,9 @@ Para gravar os dados do piloto na planilha Google:
 5. Rode:
 
 ```r
+source("R/config.R")
+load_project_env()
+Sys.getenv("GOOGLE_SHEET_ID")
 source("scripts/03_setup_google_sheets.R")
 source("scripts/01_run_app.R")
 ```
