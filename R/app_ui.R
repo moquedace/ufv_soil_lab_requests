@@ -4,39 +4,37 @@ app_ui <- function() {
     theme = bslib::bs_theme(
       version = 5,
       bootswatch = "flatly",
-      primary = "#6f4a2f",
+      primary = "#1f5f4a",
       base_font = bslib::font_google("Inter")
     ),
     header = tags$head(
       tags$style(
         "
         :root {
-          --soil-900: #2f241c;
-          --soil-800: #443124;
-          --soil-700: #5b3f2b;
-          --soil-600: #6f4a2f;
-          --soil-100: #efe6da;
-          --leaf-700: #1f5b43;
-          --leaf-600: #287253;
-          --gold-500: #c9a227;
-          --paper-50: #f8f6f2;
-          --paper-100: #f1ede6;
-          --line-soft: #ded6ca;
-          --ink-900: #1f2523;
-          --ink-600: #5d6761;
-          --shadow-soft: 0 12px 30px rgba(47, 36, 28, .08);
+          --brand-900: #17372f;
+          --brand-800: #1c493d;
+          --brand-700: #1f5f4a;
+          --brand-600: #28745a;
+          --soil-700: #6b573f;
+          --accent-500: #b08a2e;
+          --surface-0: #ffffff;
+          --surface-50: #f7f8f7;
+          --surface-100: #eef2f0;
+          --line-soft: #d9e0dc;
+          --ink-900: #202624;
+          --ink-700: #3f4b47;
+          --ink-600: #64716c;
+          --shadow-soft: 0 8px 22px rgba(28, 73, 61, .07);
         }
         body {
-          background:
-            linear-gradient(180deg, rgba(241, 237, 230, .72) 0%, rgba(248, 246, 242, .96) 260px),
-            var(--paper-50);
+          background: var(--surface-50);
           color: var(--ink-900);
         }
         .navbar {
-          background: linear-gradient(90deg, var(--soil-900) 0%, var(--soil-700) 56%, var(--leaf-700) 100%) !important;
-          box-shadow: 0 8px 24px rgba(47, 36, 28, .18);
-          min-height: 72px;
-          border-bottom: 1px solid rgba(255, 255, 255, .13);
+          background: var(--brand-900) !important;
+          box-shadow: 0 2px 14px rgba(23, 55, 47, .14);
+          min-height: 68px;
+          border-bottom: 1px solid rgba(255, 255, 255, .1);
         }
         .navbar .container-fluid {
           gap: .75rem;
@@ -58,17 +56,17 @@ app_ui <- function() {
         .navbar .nav-link.active,
         .navbar .nav-link:focus,
         .navbar .nav-link:hover {
-          background: rgba(255, 255, 255, .12);
+          background: rgba(255, 255, 255, .1);
           color: #fff !important;
         }
         .navbar .nav-link.active {
-          box-shadow: inset 0 -3px 0 var(--gold-500);
+          box-shadow: inset 0 -3px 0 var(--accent-500);
         }
         a {
-          color: var(--leaf-700);
+          color: var(--brand-700);
         }
         a:hover {
-          color: var(--soil-700);
+          color: var(--brand-900);
         }
         .btn {
           border-radius: 8px;
@@ -77,53 +75,53 @@ app_ui <- function() {
           box-shadow: none !important;
         }
         .btn-primary {
-          background: var(--leaf-700);
-          border-color: var(--leaf-700);
+          background: var(--brand-700);
+          border-color: var(--brand-700);
           color: #fff;
         }
         .btn-primary:hover,
         .btn-primary:focus {
-          background: #184a37;
-          border-color: #184a37;
+          background: var(--brand-800);
+          border-color: var(--brand-800);
           color: #fff;
         }
         .btn-outline-primary {
-          color: var(--soil-700);
-          border-color: #b89f7b;
-          background: #fffaf1;
+          color: var(--brand-700);
+          border-color: #9cb6ac;
+          background: #fff;
         }
         .btn-outline-primary:hover,
         .btn-outline-primary:focus {
-          background: var(--soil-700);
-          border-color: var(--soil-700);
+          background: var(--brand-700);
+          border-color: var(--brand-700);
           color: #fff;
         }
         .btn-secondary,
         .btn-default {
-          background: #ece3d6;
-          border-color: #d8c6ae;
-          color: var(--soil-800);
+          background: #eef2f0;
+          border-color: #d5ded9;
+          color: var(--ink-700);
         }
         .btn-secondary:hover,
         .btn-secondary:focus,
         .btn-default:hover,
         .btn-default:focus {
-          background: #dfd0bc;
-          border-color: #cbb393;
-          color: var(--soil-900);
+          background: #e1e8e4;
+          border-color: #cbd7d1;
+          color: var(--ink-900);
         }
         .page-link {
-          color: var(--soil-700);
-          border-color: #e1d8ca;
+          color: var(--brand-700);
+          border-color: var(--line-soft);
         }
         .page-item.active .page-link {
-          background: var(--leaf-700);
-          border-color: var(--leaf-700);
+          background: var(--brand-700);
+          border-color: var(--brand-700);
           color: #fff;
         }
         .page-link:hover {
-          color: var(--soil-900);
-          background: var(--paper-100);
+          color: var(--brand-900);
+          background: var(--surface-100);
         }
         .navbar-logos {
           display: flex;
@@ -132,8 +130,8 @@ app_ui <- function() {
           margin-left: 1rem;
           padding: .34rem .65rem;
           border-radius: 8px;
-          background: rgba(255, 255, 255, .94);
-          box-shadow: 0 6px 18px rgba(47, 36, 28, .13), inset 0 0 0 1px rgba(255, 255, 255, .7);
+          background: rgba(255, 255, 255, .96);
+          box-shadow: 0 4px 12px rgba(23, 55, 47, .1), inset 0 0 0 1px rgba(255, 255, 255, .7);
         }
         .navbar-logo {
           display: block;
@@ -162,7 +160,7 @@ app_ui <- function() {
         }
         .section-title {
           margin-bottom: .2rem;
-          color: var(--soil-900);
+          color: var(--ink-900);
           font-weight: 850;
         }
         .section-title + .muted-help {
@@ -173,23 +171,23 @@ app_ui <- function() {
           font-size: .94rem;
         }
         .card {
-          border: 1px solid rgba(122, 94, 63, .16);
+          border: 1px solid var(--line-soft);
           border-radius: 8px;
           box-shadow: var(--shadow-soft);
-          background: rgba(255, 255, 255, .94);
+          background: var(--surface-0);
         }
         .card-header {
-          background: linear-gradient(180deg, #fff 0%, #fbf8f2 100%);
-          border-bottom: 1px solid rgba(122, 94, 63, .14);
-          color: var(--soil-900);
+          background: #fff;
+          border-bottom: 1px solid var(--line-soft);
+          color: var(--ink-900);
           font-weight: 800;
         }
         .sample-card {
-          border: 1px solid rgba(122, 94, 63, .18);
+          border: 1px solid var(--line-soft);
           border-radius: 8px;
           padding: 1.1rem;
           margin-bottom: 1.1rem;
-          background: rgba(255, 255, 255, .94);
+          background: var(--surface-0);
           box-shadow: var(--shadow-soft);
         }
         .sample-card > .bslib-grid,
@@ -198,7 +196,7 @@ app_ui <- function() {
         }
         label,
         .control-label {
-          color: var(--soil-900);
+          color: var(--ink-900);
           font-size: .88rem;
           font-weight: 750;
           margin-bottom: .3rem;
@@ -206,7 +204,7 @@ app_ui <- function() {
         .form-control,
         .form-select,
         .selectize-input {
-          border-color: #d9cec0;
+          border-color: #cfd8d3;
           border-radius: 8px;
           color: var(--ink-900);
           background-color: #fff;
@@ -214,8 +212,8 @@ app_ui <- function() {
         .form-control:focus,
         .form-select:focus,
         .selectize-input.focus {
-          border-color: var(--leaf-600);
-          box-shadow: 0 0 0 .2rem rgba(40, 114, 83, .15);
+          border-color: var(--brand-600);
+          box-shadow: 0 0 0 .2rem rgba(31, 95, 74, .14);
         }
         .checkbox-inline,
         .radio-inline {
@@ -223,29 +221,29 @@ app_ui <- function() {
         }
         input[type='checkbox'],
         input[type='radio'] {
-          accent-color: var(--leaf-700);
+          accent-color: var(--brand-700);
         }
         .map-box {
           min-height: 420px;
           overflow: hidden;
-          border: 1px solid #d8cdbc;
+          border: 1px solid var(--line-soft);
           border-radius: 8px;
-          background: #e9e2d8;
+          background: #e7ece9;
         }
         .leaflet-container {
           border-radius: 8px;
           font-family: Inter, system-ui, sans-serif;
         }
         pre {
-          color: var(--soil-900);
-          background: #faf7f1;
-          border: 1px solid #e2d6c8;
+          color: var(--ink-900);
+          background: var(--surface-50);
+          border: 1px solid var(--line-soft);
           border-radius: 8px;
           padding: .75rem;
         }
         .review-box {
-          background: #fbf8f2;
-          border: 1px solid #e2d6c8;
+          background: var(--surface-50);
+          border: 1px solid var(--line-soft);
           border-radius: 8px;
           padding: 1rem;
         }
@@ -262,7 +260,7 @@ app_ui <- function() {
         }
         .review-box dd {
           margin: 0;
-          color: var(--soil-900);
+          color: var(--ink-900);
           font-weight: 700;
         }
         table.dataTable {
@@ -274,31 +272,31 @@ app_ui <- function() {
         }
         .dataTables_wrapper .dataTables_filter input,
         .dataTables_wrapper .dataTables_length select {
-          border: 1px solid #d9cec0;
+          border: 1px solid #cfd8d3;
           border-radius: 8px;
           padding: .28rem .5rem;
         }
         table.dataTable thead th {
-          background: #f2ece2;
-          color: var(--soil-900);
-          border-bottom: 1px solid #d6c8b6 !important;
+          background: var(--surface-100);
+          color: var(--ink-900);
+          border-bottom: 1px solid var(--line-soft) !important;
           font-size: .86rem;
         }
         table.dataTable tbody td {
-          border-top: 1px solid #eee6dc;
+          border-top: 1px solid #edf1ef;
           vertical-align: middle;
         }
         table.dataTable tbody tr:hover {
-          background: #fbf6ec;
+          background: #f5f8f6;
         }
         .alert {
           border-radius: 8px;
-          border: 1px solid rgba(201, 162, 39, .35);
-          background: #fff7df;
-          color: #5e4810;
+          border: 1px solid rgba(176, 138, 46, .36);
+          background: #fff9e8;
+          color: #584312;
         }
         hr {
-          border-color: rgba(122, 94, 63, .18);
+          border-color: var(--line-soft);
           opacity: 1;
           margin: 1.35rem 0;
         }
