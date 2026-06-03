@@ -4,50 +4,58 @@ app_ui <- function() {
     theme = bslib::bs_theme(
       version = 5,
       bootswatch = "flatly",
-      primary = "#176b3a",
+      primary = "#7a4d2b",
       base_font = bslib::font_google("Inter")
     ),
     header = tags$head(
       tags$style(
         "
-        .navbar-brand { font-weight: 700; }
-        .brand-strip {
-          max-width: 1180px;
-          margin: 0 auto;
-          padding: 1rem 1.25rem .5rem;
+        .navbar {
+          background: linear-gradient(90deg, #5a3822 0%, #7a4d2b 48%, #946432 100%) !important;
+          box-shadow: 0 2px 12px rgba(45, 28, 17, .18);
+        }
+        .navbar-brand {
+          font-weight: 800;
+          color: #fff !important;
+          letter-spacing: 0;
+        }
+        .navbar .nav-link {
+          color: rgba(255, 255, 255, .86) !important;
+          font-weight: 650;
+        }
+        .navbar .nav-link.active,
+        .navbar .nav-link:focus,
+        .navbar .nav-link:hover {
+          color: #f2d58a !important;
+        }
+        .navbar-logos {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 1.5rem;
+          gap: .7rem;
+          margin-left: 1rem;
+          padding: .32rem .55rem;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, .92);
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .4);
         }
-        .brand-title {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #23332b;
-          margin: 0;
-          text-align: center;
-        }
-        .brand-subtitle {
-          color: #5c6670;
-          margin: .15rem 0 0;
-          text-align: center;
-        }
-        .brand-logo {
+        .navbar-logo {
           display: block;
-          max-width: 220px;
-          max-height: 58px;
+          max-height: 34px;
+          max-width: 140px;
           object-fit: contain;
         }
-        .brand-logo-dps { max-width: 190px; }
+        .navbar-logo-dps {
+          max-height: 38px;
+          max-width: 118px;
+        }
         @media (max-width: 760px) {
-          .brand-strip {
-            flex-direction: column;
-            align-items: center;
-            gap: .75rem;
+          .navbar-logos {
+            width: 100%;
+            justify-content: center;
+            margin: .55rem 0 0;
           }
-          .brand-logo {
-            max-width: 210px;
-            max-height: 54px;
+          .navbar-logo {
+            max-width: 132px;
           }
         }
         .page-wrap { max-width: 1180px; margin: 0 auto; padding: 1.25rem; }
@@ -59,15 +67,6 @@ app_ui <- function() {
         "
       )
     ),
-    div(
-      class = "brand-strip",
-      tags$img(class = "brand-logo", src = "img/logo_ufv.png", alt = "Universidade Federal de Vicosa"),
-      div(
-        tags$p(class = "brand-title", "Sistema de solicitacao de analises"),
-        tags$p(class = "brand-subtitle", "Departamento de Solos - UFV")
-      ),
-      tags$img(class = "brand-logo brand-logo-dps", src = "img/logo_dps_ufv.png", alt = "Departamento de Solos UFV")
-    ),
     bslib::nav_panel(
       "Solicitar analise",
       div(class = "page-wrap", mod_solicitante_ui("solicitante"))
@@ -75,6 +74,14 @@ app_ui <- function() {
     bslib::nav_panel(
       "Recepcao",
       div(class = "page-wrap", mod_recepcao_ui("recepcao"))
+    ),
+    bslib::nav_spacer(),
+    bslib::nav_item(
+      div(
+        class = "navbar-logos",
+        tags$img(class = "navbar-logo", src = "img/logo_ufv.png", alt = "Universidade Federal de Vicosa"),
+        tags$img(class = "navbar-logo navbar-logo-dps", src = "img/logo_dps_ufv.png", alt = "Departamento de Solos UFV")
+      )
     )
   )
 }
