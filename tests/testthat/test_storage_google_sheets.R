@@ -21,6 +21,8 @@ test_that("use_google_sheets only turns on with flag and sheet id", {
 test_that("append_google_rows keeps expected columns", {
   expect_true(all(c("solicitacoes", "amostras", "analises_amostra") %in% names(sheet_columns)))
   expect_true("solicitacao_id" %in% sheet_columns$solicitacoes)
+  expect_true("numero_laboratorio" %in% sheet_columns$solicitacoes)
+  expect_true("observacoes_internas" %in% sheet_columns$solicitacoes)
   expect_true("amostra_id" %in% sheet_columns$amostras)
   expect_true("analise_id" %in% sheet_columns$analises_amostra)
 })

@@ -116,6 +116,12 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
         telefone = payload$solicitante$telefone,
         cidade_solicitante = payload$solicitante$cidade_solicitante,
         status_interno = "Recebida",
+        data_entrada_lab = "",
+        numero_laboratorio = "",
+        custo_total_lab = "",
+        forma_pagamento_lab = "",
+        pedido_numero_lab = "",
+        observacoes_internas = "",
         stringsAsFactors = FALSE
       )
 

@@ -45,6 +45,8 @@ grupos desejados e, em seguida, selecione as analises dentro de cada grupo.
 
 Na aba `Recepcao`, os filtros de busca/status/grupo de analise tambem definem o
 conteudo exportado nos arquivos CSV e XLSX.
+Essa aba tambem permite registrar campos internos do laboratorio, como data de
+entrada, numero de laboratorio, custo, pagamento, pedido e observacoes internas.
 
 ## Como rodar os testes
 
@@ -75,6 +77,8 @@ source("scripts/01_run_app.R")
 
 Na primeira execucao, o pacote `googlesheets4` pode abrir o fluxo de
 autenticacao da sua conta Google.
+Rode `scripts/03_setup_google_sheets.R` novamente quando novas colunas forem
+incluidas no sistema.
 
 Para testar escrita real na planilha, rode:
 

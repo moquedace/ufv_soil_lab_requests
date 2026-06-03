@@ -20,6 +20,12 @@ test_store <- list(
     telefone = "(00) 00000-0000",
     cidade_solicitante = "Vicosa",
     status_interno = "Teste",
+    data_entrada_lab = "",
+    numero_laboratorio = "",
+    custo_total_lab = "",
+    forma_pagamento_lab = "",
+    pedido_numero_lab = "",
+    observacoes_internas = "Registro criado por teste manual de integracao.",
     stringsAsFactors = FALSE
   ),
   amostras = data.frame(

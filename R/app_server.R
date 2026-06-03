@@ -12,7 +12,8 @@ app_server <- function(input, output, session) {
   mod_recepcao_server(
     id = "recepcao",
     app_config = app_config,
-    store = store
+    store = store,
+    persist_requests = persist_requests_store
   )
 }
 
@@ -39,6 +40,20 @@ persist_new_store <- function(new_store) {
     append_google_store(new_store),
     error = function(error) {
       warning("Nao foi possivel gravar no Google Sheets: ", conditionMessage(error))
+      FALSE
+    }
+  )
+}
+
+persist_requests_store <- function(solicitacoes) {
+  if (!use_google_sheets()) {
+    return(invisible(FALSE))
+  }
+
+  tryCatch(
+    write_google_sheet(google_sheet_id(), "solicitacoes", solicitacoes),
+    error = function(error) {
+      warning("Nao foi possivel atualizar solicitacoes no Google Sheets: ", conditionMessage(error))
       FALSE
     }
   )

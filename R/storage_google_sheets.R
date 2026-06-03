@@ -8,7 +8,13 @@ sheet_columns <- list(
     "email",
     "telefone",
     "cidade_solicitante",
-    "status_interno"
+    "status_interno",
+    "data_entrada_lab",
+    "numero_laboratorio",
+    "custo_total_lab",
+    "forma_pagamento_lab",
+    "pedido_numero_lab",
+    "observacoes_internas"
   ),
   amostras = c(
     "amostra_id",
@@ -79,14 +85,16 @@ setup_google_sheets <- function(sheet_id = google_sheet_id()) {
   }
 
   for (sheet in sheet_names) {
-    current <- read_google_sheet(sheet_id, sheet)
-    if (!nrow(current) && !ncol(current)) {
+    raw <- read_google_sheet_raw(sheet_id, sheet)
+    if (!nrow(raw) && !ncol(raw)) {
       googlesheets4::range_write(
         ss = sheet_id,
         data = empty_sheet_data(sheet),
         sheet = sheet,
         col_names = TRUE
       )
+    } else if (length(setdiff(sheet_columns[[sheet]], names(raw)))) {
+      write_google_sheet(sheet_id, sheet, read_google_sheet(sheet_id, sheet))
     }
   }
 
@@ -114,6 +122,23 @@ append_google_store <- function(new_store, sheet_id = google_sheet_id()) {
 }
 
 read_google_sheet <- function(sheet_id, sheet) {
+  data <- read_google_sheet_raw(sheet_id, sheet)
+
+  if (is.null(data)) {
+    return(empty_sheet_data(sheet))
+  }
+
+  data <- as.data.frame(data, stringsAsFactors = FALSE)
+  columns <- sheet_columns[[sheet]]
+  missing <- setdiff(columns, names(data))
+  for (column in missing) {
+    data[[column]] <- NA
+  }
+
+  data[, columns, drop = FALSE]
+}
+
+read_google_sheet_raw <- function(sheet_id, sheet) {
   ensure_google_auth()
 
   data <- tryCatch(
@@ -122,10 +147,30 @@ read_google_sheet <- function(sheet_id, sheet) {
   )
 
   if (is.null(data)) {
-    return(empty_sheet_data(sheet))
+    return(NULL)
   }
 
   as.data.frame(data, stringsAsFactors = FALSE)
+}
+
+write_google_sheet <- function(sheet_id, sheet, data) {
+  ensure_google_auth()
+
+  columns <- sheet_columns[[sheet]]
+  missing <- setdiff(columns, names(data))
+  for (column in missing) {
+    data[[column]] <- NA
+  }
+
+  data <- data[, columns, drop = FALSE]
+  googlesheets4::range_write(
+    ss = sheet_id,
+    data = data,
+    sheet = sheet,
+    col_names = TRUE
+  )
+
+  invisible(TRUE)
 }
 
 append_google_rows <- function(sheet_id, sheet, data) {

@@ -30,7 +30,30 @@ mod_recepcao_ui <- function(id) {
       ),
       bslib::card(
         bslib::card_header("Detalhe selecionado"),
-        uiOutput(ns("detalhe_solicitacao"))
+        uiOutput(ns("detalhe_solicitacao")),
+        tags$hr(),
+        h4("Campos internos"),
+        bslib::layout_columns(
+          textInput(ns("data_entrada_lab"), "Data de entrada"),
+          textInput(ns("numero_laboratorio"), "Numero de laboratorio")
+        ),
+        bslib::layout_columns(
+          textInput(ns("custo_total_lab"), "Custo total"),
+          textInput(ns("pedido_numero_lab"), "Pedido numero")
+        ),
+        selectInput(
+          ns("status_interno_edit"),
+          "Status interno",
+          choices = c("Recebida", "Aguardando amostra", "Em analise", "Finalizada", "Cancelada", "Teste")
+        ),
+        selectInput(
+          ns("forma_pagamento_lab"),
+          "Forma de pagamento",
+          choices = c("", "PIX", "SIF", "FACEV", "FUNARBE", "Boleto", "Nota Fiscal", "Boleto c/ nota", "Transferencia entre convenios")
+        ),
+        textAreaInput(ns("observacoes_internas"), "Observacoes internas", rows = 3),
+        actionButton(ns("salvar_interno"), "Salvar campos internos", class = "btn btn-primary"),
+        uiOutput(ns("salvar_feedback"))
       )
     ),
     bslib::card(
@@ -40,16 +63,18 @@ mod_recepcao_ui <- function(id) {
   )
 }
 
-mod_recepcao_server <- function(id, app_config, store) {
+mod_recepcao_server <- function(id, app_config, store, persist_requests = function(solicitacoes) invisible(FALSE)) {
   moduleServer(id, function(input, output, session) {
+    last_saved_request <- reactiveVal("")
+
     observe({
       current <- store()
       statuses <- sort(unique(current$solicitacoes$status_interno))
-      statuses <- statuses[nzchar(statuses)]
+      statuses <- statuses[!is.na(statuses) & nzchar(statuses)]
       updateSelectInput(session, "status", choices = c("Todos" = "todos", statuses))
 
       labs <- sort(unique(current$analises$laboratorio))
-      labs <- labs[nzchar(labs)]
+      labs <- labs[!is.na(labs) & nzchar(labs)]
       lab_labels <- stats::setNames(labs, vapply(labs, function(lab) {
         app_config$analises[[lab]]$nome %||% lab
       }, character(1)))
@@ -123,6 +148,70 @@ mod_recepcao_server <- function(id, app_config, store) {
       )
     })
 
+    selected_request <- reactive({
+      selected <- input$solicitacoes_rows_selected
+      requests <- request_data()
+      if (!length(selected) || !nrow(requests)) {
+        return(NULL)
+      }
+
+      requests[selected[1], , drop = FALSE]
+    })
+
+    observeEvent(selected_request(), {
+      request <- selected_request()
+      if (is.null(request)) {
+        return()
+      }
+
+      updateTextInput(session, "data_entrada_lab", value = field_value(request, "data_entrada_lab"))
+      updateTextInput(session, "numero_laboratorio", value = field_value(request, "numero_laboratorio"))
+      updateTextInput(session, "custo_total_lab", value = field_value(request, "custo_total_lab"))
+      updateTextInput(session, "pedido_numero_lab", value = field_value(request, "pedido_numero_lab"))
+      updateSelectInput(session, "status_interno_edit", selected = field_value(request, "status_interno", "Recebida"))
+      updateSelectInput(session, "forma_pagamento_lab", selected = field_value(request, "forma_pagamento_lab"))
+      updateTextAreaInput(session, "observacoes_internas", value = field_value(request, "observacoes_internas"))
+    }, ignoreInit = TRUE)
+
+    observeEvent(input$salvar_interno, {
+      request <- selected_request()
+      if (is.null(request)) {
+        showNotification("Selecione uma solicitacao antes de salvar.", type = "warning")
+        return()
+      }
+
+      request_id <- request$solicitacao_id[[1]]
+      current <- store()
+      row <- current$solicitacoes$solicitacao_id == request_id
+
+      if (!any(row)) {
+        showNotification("Solicitacao nao encontrada no armazenamento atual.", type = "error")
+        return()
+      }
+
+      current$solicitacoes <- ensure_request_internal_columns(current$solicitacoes)
+      current$solicitacoes[row, "data_entrada_lab"] <- input$data_entrada_lab
+      current$solicitacoes[row, "numero_laboratorio"] <- input$numero_laboratorio
+      current$solicitacoes[row, "custo_total_lab"] <- input$custo_total_lab
+      current$solicitacoes[row, "forma_pagamento_lab"] <- input$forma_pagamento_lab
+      current$solicitacoes[row, "pedido_numero_lab"] <- input$pedido_numero_lab
+      current$solicitacoes[row, "observacoes_internas"] <- input$observacoes_internas
+      current$solicitacoes[row, "status_interno"] <- input$status_interno_edit
+
+      store(current)
+      persist_requests(current$solicitacoes)
+      last_saved_request(request_id)
+      showNotification("Campos internos salvos.", type = "message")
+    })
+
+    output$salvar_feedback <- renderUI({
+      if (!nzchar(last_saved_request())) {
+        return(NULL)
+      }
+
+      div(class = "alert alert-success", paste("Ultima solicitacao salva:", last_saved_request()))
+    })
+
     output$baixar_csv <- downloadHandler(
       filename = function() paste0("solicitacoes_filtradas_", Sys.Date(), ".csv"),
       content = function(file) write_export_csv(analysis_data(), file)
@@ -133,4 +222,36 @@ mod_recepcao_server <- function(id, app_config, store) {
       content = function(file) write_export_xlsx(analysis_data(), file)
     )
   })
+}
+
+field_value <- function(data, field, fallback = "") {
+  if (!field %in% names(data)) {
+    return(fallback)
+  }
+
+  value <- data[[field]][[1]]
+  if (is.null(value) || !length(value) || is.na(value)) {
+    fallback
+  } else {
+    as.character(value)
+  }
+}
+
+ensure_request_internal_columns <- function(data) {
+  columns <- c(
+    "data_entrada_lab",
+    "numero_laboratorio",
+    "custo_total_lab",
+    "forma_pagamento_lab",
+    "pedido_numero_lab",
+    "observacoes_internas"
+  )
+
+  for (column in columns) {
+    if (!column %in% names(data)) {
+      data[[column]] <- ""
+    }
+  }
+
+  data
 }
