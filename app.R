@@ -1,7 +1,9 @@
 library(shiny)
 
 source("R/config.R")
-load_project_env()
+if (!identical(Sys.getenv("UFV_SOIL_LAB_TEST_MODE", "false"), "true")) {
+  load_project_env()
+}
 
 source("R/sample_data.R")
 source("R/exportacao.R")

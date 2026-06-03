@@ -56,6 +56,7 @@ source("scripts/02_run_tests.R")
 
 Os testes cobrem parsing de coordenadas, exportacao tabular e um fluxo basico
 do Shiny com preenchimento de solicitante, amostra e envio.
+Os testes automaticos rodam em modo local e nao escrevem na planilha Google.
 
 ## Google Sheets
 

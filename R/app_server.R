@@ -15,6 +15,12 @@ app_server <- function(input, output, session) {
     store = store,
     persist_requests = persist_requests_store
   )
+
+  exportTestValues(
+    solicitacoes_count = nrow(store()$solicitacoes),
+    amostras_count = nrow(store()$amostras),
+    analises_count = nrow(store()$analises)
+  )
 }
 
 load_initial_store <- function() {

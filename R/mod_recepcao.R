@@ -212,6 +212,10 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
       div(class = "alert alert-success", paste("Ultima solicitacao salva:", last_saved_request()))
     })
 
+    exportTestValues(
+      ultimo_salvamento_id = last_saved_request()
+    )
+
     output$baixar_csv <- downloadHandler(
       filename = function() paste0("solicitacoes_filtradas_", Sys.Date(), ".csv"),
       content = function(file) write_export_csv(analysis_data(), file)
