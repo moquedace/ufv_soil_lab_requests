@@ -5,6 +5,7 @@ packages <- c(
   "DT",
   "httr2",
   "jsonlite",
+  "later",
   "yaml",
   "writexl",
   "googlesheets4",

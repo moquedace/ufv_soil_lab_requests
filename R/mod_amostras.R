@@ -65,16 +65,17 @@ mod_amostras_ui <- function(id) {
           ),
           verbatimTextOutput(ns("coords")),
           actionButton(ns("usar_anterior"), "Usar local da ultima amostra", class = "btn btn-secondary"),
-          actionButton(ns("adicionar"), "Adicionar amostra", class = "btn btn-primary")
+          uiOutput(ns("acao_amostra_ui"))
         )
       )
     ),
     h4("Amostras adicionadas"),
     bslib::layout_columns(
-      col_widths = c(3, 3, 6),
+      col_widths = c(3, 3, 3, 3),
+      actionButton(ns("editar_amostra"), "Editar selecionada", class = "btn btn-secondary"),
       actionButton(ns("duplicar_amostra"), "Duplicar selecionada", class = "btn btn-secondary"),
       actionButton(ns("remover_amostra"), "Remover selecionada", class = "btn btn-outline-primary"),
-      p(class = "muted-help", "Selecione uma linha da tabela para duplicar ou remover.")
+      p(class = "muted-help", "Selecione uma linha para editar, duplicar ou remover.")
     ),
     DT::DTOutput(ns("tabela_amostras"))
   )
@@ -84,6 +85,18 @@ mod_amostras_server <- function(id, app_config) {
   moduleServer(id, function(input, output, session) {
     marker <- reactiveVal(NULL)
     samples <- reactiveVal(list())
+    editing_index <- reactiveVal(NULL)
+
+    output$acao_amostra_ui <- renderUI({
+      if (is.null(editing_index())) {
+        actionButton(session$ns("adicionar"), "Adicionar amostra", class = "btn btn-primary")
+      } else {
+        tagList(
+          actionButton(session$ns("atualizar_amostra"), "Atualizar amostra", class = "btn btn-primary"),
+          actionButton(session$ns("cancelar_edicao"), "Cancelar edicao", class = "btn btn-secondary")
+        )
+      }
+    })
 
     output$analises_ui <- renderUI({
       groups <- input$grupos_analise %||% character()
@@ -200,50 +213,50 @@ mod_amostras_server <- function(id, app_config) {
     })
 
     observeEvent(input$adicionar, {
-      if (!nzchar(input$referencia_amostra %||% "")) {
-        showNotification("Informe uma referencia para a amostra.", type = "error")
+      sample <- build_sample_from_inputs(input, app_config, marker())
+      if (!validate_sample_for_ui(sample)) {
         return()
       }
-
-      if (!nzchar(input$municipio_amostra %||% "")) {
-        showNotification("Informe o municipio da amostra.", type = "error")
-        return()
-      }
-
-      point <- marker()
-      groups <- input$grupos_analise %||% character()
-      analyses <- collect_selected_analyses(input, app_config, groups)
-
-      if (!length(groups)) {
-        showNotification("Selecione pelo menos um grupo de analise.", type = "error")
-        return()
-      }
-
-      if (!nrow(analyses)) {
-        showNotification("Marque pelo menos uma analise para a amostra.", type = "error")
-        return()
-      }
-
-      sample <- list(
-        referencia_amostra = input$referencia_amostra,
-        tipo_material = input$tipo_material,
-        grupos_analise = groups,
-        analises = analyses,
-        analises_ids = analyses$analise_id,
-        analises_nomes = analyses$analise_nome,
-        municipio_amostra = input$municipio_amostra,
-        uf_amostra = input$uf_amostra,
-        localidade_descricao = input$localidade_descricao,
-        latitude_wgs84 = if (is.null(point)) NA_real_ else point$lat,
-        longitude_wgs84 = if (is.null(point)) NA_real_ else point$lng,
-        tipo_localizacao = input$tipo_localizacao,
-        carbonato_presente = if ("chn" %in% groups) input$carbonato_presente else NA_character_,
-        pre_tratamento_necessario = "carbono_organico_total" %in% analyses$analise_id
-      )
 
       samples(append(samples(), list(sample)))
       updateTextInput(session, "referencia_amostra", value = "")
       showNotification("Amostra adicionada.", type = "message")
+    })
+
+    observeEvent(input$editar_amostra, {
+      selected <- input$tabela_amostras_rows_selected
+      current <- samples()
+
+      if (!length(selected) || !length(current)) {
+        showNotification("Selecione uma amostra para editar.", type = "warning")
+        return()
+      }
+
+      editing_index(selected[1])
+      load_sample_into_form(session, current[[selected[1]]], marker)
+      showNotification("Edicao iniciada. Ajuste os campos e clique em atualizar.", type = "message")
+    })
+
+    observeEvent(input$atualizar_amostra, {
+      index <- editing_index()
+      if (is.null(index)) {
+        return()
+      }
+
+      sample <- build_sample_from_inputs(input, app_config, marker())
+      if (!validate_sample_for_ui(sample)) {
+        return()
+      }
+
+      samples(replace_sample_at(samples(), index, sample))
+      editing_index(NULL)
+      updateTextInput(session, "referencia_amostra", value = "")
+      showNotification("Amostra atualizada.", type = "message")
+    })
+
+    observeEvent(input$cancelar_edicao, {
+      editing_index(NULL)
+      showNotification("Edicao cancelada.", type = "message")
     })
 
     observeEvent(input$duplicar_amostra, {
@@ -314,6 +327,94 @@ duplicate_sample_at <- function(samples, index) {
   duplicated <- samples[[index]]
   duplicated$referencia_amostra <- paste(duplicated$referencia_amostra, "copia")
   append(samples, list(duplicated))
+}
+
+replace_sample_at <- function(samples, index, sample) {
+  if (!length(samples) || index < 1 || index > length(samples)) {
+    return(samples)
+  }
+
+  samples[[index]] <- sample
+  samples
+}
+
+build_sample_from_inputs <- function(input, app_config, point) {
+  groups <- input$grupos_analise %||% character()
+  analyses <- collect_selected_analyses(input, app_config, groups)
+
+  list(
+    referencia_amostra = input$referencia_amostra,
+    tipo_material = input$tipo_material,
+    grupos_analise = groups,
+    analises = analyses,
+    analises_ids = analyses$analise_id,
+    analises_nomes = analyses$analise_nome,
+    municipio_amostra = input$municipio_amostra,
+    uf_amostra = input$uf_amostra,
+    localidade_descricao = input$localidade_descricao,
+    latitude_wgs84 = if (is.null(point)) NA_real_ else point$lat,
+    longitude_wgs84 = if (is.null(point)) NA_real_ else point$lng,
+    tipo_localizacao = input$tipo_localizacao,
+    carbonato_presente = if ("chn" %in% groups) input$carbonato_presente else NA_character_,
+    pre_tratamento_necessario = "carbono_organico_total" %in% analyses$analise_id
+  )
+}
+
+validate_sample_for_ui <- function(sample) {
+  if (!nzchar(sample$referencia_amostra %||% "")) {
+    showNotification("Informe uma referencia para a amostra.", type = "error")
+    return(FALSE)
+  }
+
+  if (!nzchar(sample$municipio_amostra %||% "")) {
+    showNotification("Informe o municipio da amostra.", type = "error")
+    return(FALSE)
+  }
+
+  if (!length(sample$grupos_analise)) {
+    showNotification("Selecione pelo menos um grupo de analise.", type = "error")
+    return(FALSE)
+  }
+
+  if (!nrow(sample$analises)) {
+    showNotification("Marque pelo menos uma analise para a amostra.", type = "error")
+    return(FALSE)
+  }
+
+  TRUE
+}
+
+load_sample_into_form <- function(session, sample, marker) {
+  updateTextInput(session, "referencia_amostra", value = sample$referencia_amostra)
+  updateSelectInput(session, "tipo_material", selected = sample$tipo_material)
+  updateCheckboxGroupInput(session, "grupos_analise", selected = sample$grupos_analise)
+  updateTextInput(session, "municipio_amostra", value = sample$municipio_amostra)
+  updateTextInput(session, "uf_amostra", value = sample$uf_amostra)
+  updateTextInput(session, "localidade_descricao", value = sample$localidade_descricao)
+  updateRadioButtons(session, "tipo_localizacao", selected = sample$tipo_localizacao)
+
+  if (!is.na(sample$latitude_wgs84) && !is.na(sample$longitude_wgs84)) {
+    point <- list(lat = sample$latitude_wgs84, lng = sample$longitude_wgs84)
+    marker(point)
+    leaflet::leafletProxy("mapa", session = session) |>
+      leaflet::clearMarkers() |>
+      leaflet::setView(lng = point$lng, lat = point$lat, zoom = 14) |>
+      leaflet::addMarkers(lng = point$lng, lat = point$lat, popup = "Local da amostra")
+  }
+
+  later::later(function() {
+    for (group_id in sample$grupos_analise) {
+      updateCheckboxGroupInput(
+        session,
+        paste0("analises_", group_id),
+        selected = sample$analises$analise_id[sample$analises$laboratorio == group_id]
+      )
+    }
+
+    if ("chn" %in% sample$grupos_analise) {
+      updateRadioButtons(session, "carbonato_presente", selected = sample$carbonato_presente)
+    }
+  }, delay = 0.1)
 }
 
 collect_selected_analyses <- function(input, app_config, groups) {

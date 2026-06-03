@@ -106,6 +106,40 @@ test_that("solicitante can duplicate and remove samples before submit", {
   expect_equal(app$get_value(export = "analises_count"), 2)
 })
 
+test_that("solicitante can edit a sample before submit", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("solicitacao_edita_amostra")
+  on.exit(app$stop(), add = TRUE)
+
+  fill_requester(app)
+  fill_sample_base(app, reference = "Amostra antes da edicao")
+
+  app$set_inputs(
+    `solicitante-amostras-analises_solo_rotina` = "rotina_basica",
+    `solicitante-amostras-mapa_click` = list(lat = -20.7546, lng = -42.8825)
+  )
+
+  app$click("solicitante-amostras-adicionar")
+  app$wait_for_idle()
+
+  app$set_inputs(`solicitante-amostras-tabela_amostras_rows_selected` = 1)
+  app$click("solicitante-amostras-editar_amostra")
+  app$wait_for_idle()
+
+  app$set_inputs(`solicitante-amostras-referencia_amostra` = "Amostra editada")
+  app$click("solicitante-amostras-atualizar_amostra")
+  app$wait_for_idle()
+
+  app$click("solicitante-enviar")
+  app$wait_for_idle()
+
+  expect_match(app$get_value(export = "solicitante-ultimo_envio_id"), "SOL-", fixed = TRUE)
+  expect_equal(app$get_value(export = "solicitacoes_count"), 2)
+  expect_equal(app$get_value(export = "amostras_count"), 2)
+  expect_equal(app$get_value(export = "analises_count"), 2)
+})
+
 test_that("solicitante can submit CHN with organic carbon and carbonate flag", {
   skip_if_not_installed("shinytest2")
 
