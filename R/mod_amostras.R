@@ -70,6 +70,12 @@ mod_amostras_ui <- function(id) {
       )
     ),
     h4("Amostras adicionadas"),
+    bslib::layout_columns(
+      col_widths = c(3, 3, 6),
+      actionButton(ns("duplicar_amostra"), "Duplicar selecionada", class = "btn btn-secondary"),
+      actionButton(ns("remover_amostra"), "Remover selecionada", class = "btn btn-outline-primary"),
+      p(class = "muted-help", "Selecione uma linha da tabela para duplicar ou remover.")
+    ),
     DT::DTOutput(ns("tabela_amostras"))
   )
 }
@@ -240,6 +246,32 @@ mod_amostras_server <- function(id, app_config) {
       showNotification("Amostra adicionada.", type = "message")
     })
 
+    observeEvent(input$duplicar_amostra, {
+      selected <- input$tabela_amostras_rows_selected
+      current <- samples()
+
+      if (!length(selected) || !length(current)) {
+        showNotification("Selecione uma amostra para duplicar.", type = "warning")
+        return()
+      }
+
+      samples(duplicate_sample_at(current, selected[1]))
+      showNotification("Amostra duplicada.", type = "message")
+    })
+
+    observeEvent(input$remover_amostra, {
+      selected <- input$tabela_amostras_rows_selected
+      current <- samples()
+
+      if (!length(selected) || !length(current)) {
+        showNotification("Selecione uma amostra para remover.", type = "warning")
+        return()
+      }
+
+      samples(remove_sample_at(current, selected[1]))
+      showNotification("Amostra removida.", type = "message")
+    })
+
     output$tabela_amostras <- DT::renderDT({
       current <- samples()
       if (!length(current)) {
@@ -256,10 +288,32 @@ mod_amostras_server <- function(id, app_config) {
         Analises = vapply(current, function(sample) paste(sample$analises_nomes, collapse = "; "), character(1)),
         stringsAsFactors = FALSE
       )
-    }, options = list(pageLength = 5, searching = FALSE))
+    }, selection = "single", options = list(pageLength = 5, searching = FALSE))
 
     samples
   })
+}
+
+remove_sample_at <- function(samples, index) {
+  if (!length(samples) || index < 1 || index > length(samples)) {
+    return(samples)
+  }
+
+  if (length(samples) == 1) {
+    return(list())
+  }
+
+  samples[-index]
+}
+
+duplicate_sample_at <- function(samples, index) {
+  if (!length(samples) || index < 1 || index > length(samples)) {
+    return(samples)
+  }
+
+  duplicated <- samples[[index]]
+  duplicated$referencia_amostra <- paste(duplicated$referencia_amostra, "copia")
+  append(samples, list(duplicated))
 }
 
 collect_selected_analyses <- function(input, app_config, groups) {
