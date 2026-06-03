@@ -42,3 +42,13 @@ test_that("selected_sample_index falls back to hidden test index", {
   input$tabela_amostras_rows_selected <- 1
   expect_equal(selected_sample_index(input), 1)
 })
+
+test_that("current_marker falls back to hidden test coordinates", {
+  expect_equal(current_marker(list(lat = -1, lng = -2), list()), list(lat = -1, lng = -2))
+
+  input <- list(test_map_lat = -20.7546, test_map_lng = -42.8825)
+  expect_equal(current_marker(NULL, input), list(lat = -20.7546, lng = -42.8825))
+
+  input <- list(test_map_lat = NA_real_, test_map_lng = -42.8825)
+  expect_null(current_marker(NULL, input))
+})

@@ -72,7 +72,9 @@ mod_amostras_ui <- function(id) {
     h4("Amostras adicionadas"),
     tags$div(
       style = "display: none;",
-      numericInput(ns("test_selected_sample_index"), "Indice de teste", value = NA_integer_)
+      numericInput(ns("test_selected_sample_index"), "Indice de teste", value = NA_integer_),
+      numericInput(ns("test_map_lat"), "Latitude de teste", value = NA_real_),
+      numericInput(ns("test_map_lng"), "Longitude de teste", value = NA_real_)
     ),
     bslib::layout_columns(
       col_widths = c(3, 3, 3, 3),
@@ -217,7 +219,7 @@ mod_amostras_server <- function(id, app_config) {
     })
 
     observeEvent(input$adicionar, {
-      sample <- build_sample_from_inputs(input, app_config, marker())
+      sample <- build_sample_from_inputs(input, app_config, current_marker(marker(), input))
       if (!validate_sample_for_ui(sample)) {
         return()
       }
@@ -247,7 +249,7 @@ mod_amostras_server <- function(id, app_config) {
         return()
       }
 
-      sample <- build_sample_from_inputs(input, app_config, marker())
+      sample <- build_sample_from_inputs(input, app_config, current_marker(marker(), input))
       if (!validate_sample_for_ui(sample)) {
         return()
       }
@@ -359,6 +361,25 @@ replace_sample_at <- function(samples, index, sample) {
 
   samples[[index]] <- sample
   samples
+}
+
+current_marker <- function(point, input) {
+  if (!is.null(point)) {
+    return(point)
+  }
+
+  test_point_from_inputs(input)
+}
+
+test_point_from_inputs <- function(input) {
+  lat <- input$test_map_lat
+  lng <- input$test_map_lng
+
+  if (is.null(lat) || is.null(lng) || is.na(lat) || is.na(lng)) {
+    return(NULL)
+  }
+
+  list(lat = lat, lng = lng)
 }
 
 build_sample_from_inputs <- function(input, app_config, point) {

@@ -58,7 +58,8 @@ test_that("solicitante can add and submit one sample with multiple groups", {
   app$set_inputs(
     `solicitante-amostras-analises_solo_rotina` = "rotina_basica",
     `solicitante-amostras-analises_vegetal` = "nitrogenio",
-    `solicitante-amostras-mapa_click` = list(lat = -20.7546, lng = -42.8825)
+    `solicitante-amostras-test_map_lat` = -20.7546,
+    `solicitante-amostras-test_map_lng` = -42.8825
   )
 
   app$click("solicitante-amostras-adicionar")
@@ -87,7 +88,8 @@ test_that("solicitante can duplicate and remove samples before submit", {
 
   app$set_inputs(
     `solicitante-amostras-analises_solo_rotina` = "rotina_basica",
-    `solicitante-amostras-mapa_click` = list(lat = -20.7546, lng = -42.8825)
+    `solicitante-amostras-test_map_lat` = -20.7546,
+    `solicitante-amostras-test_map_lng` = -42.8825
   )
 
   app$click("solicitante-amostras-adicionar")
@@ -121,7 +123,8 @@ test_that("solicitante can edit a sample before submit", {
 
   app$set_inputs(
     `solicitante-amostras-analises_solo_rotina` = "rotina_basica",
-    `solicitante-amostras-mapa_click` = list(lat = -20.7546, lng = -42.8825)
+    `solicitante-amostras-test_map_lat` = -20.7546,
+    `solicitante-amostras-test_map_lng` = -42.8825
   )
 
   app$click("solicitante-amostras-adicionar")
@@ -158,7 +161,8 @@ test_that("solicitante can submit CHN with organic carbon and carbonate flag", {
   app$set_inputs(
     `solicitante-amostras-analises_chn` = c("carbono_organico_total", "nitrogenio"),
     `solicitante-amostras-carbonato_presente` = "sim",
-    `solicitante-amostras-mapa_click` = list(lat = -20.7546, lng = -42.8825)
+    `solicitante-amostras-test_map_lat` = -20.7546,
+    `solicitante-amostras-test_map_lng` = -42.8825
   )
 
   app$click("solicitante-amostras-adicionar")
