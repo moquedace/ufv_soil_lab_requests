@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análises de Solo · DPS-UFV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+  :root {
+    /* Perfil de solo — horizontes */
+    --hz-o: #3a2a1e;   /* O — orgânico */
+    --hz-a: #6b4a30;   /* A — húmico */
+    --hz-b: #9c5a38;   /* B — latossólico */
+    --hz-bc: #be8a4e;  /* BC — ocre */
+    --hz-c: #d8c09a;   /* C — saprolito */
+
+    /* Estrutura */
+    --soil-900: #2e241c;
+    --soil-800: #3d2e23;
+    --soil-700: #5a4433;
+    --clay-600: #a6552f;   /* acento primário (terracota/siena) */
+    --clay-500: #ba6440;
+    --ocre-500: #c0883e;   /* acento secundário (ocre) */
+
+    --sand-50:  #f9f5ee;
+    --sand-100: #f3ece0;
+    --sand-200: #ece2d2;
+    --line:     #e2d7c6;
+    --surface:  #ffffff;
+
+    --ink-900: #2a211a;
+    --ink-700: #4d4339;
+    --ink-500: #8a7d6d;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--sand-50);
+    color: var(--ink-900);
+  }
+
+  /* ---- Navbar ---- */
+  .navbar {
+    background: var(--soil-900);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    min-height: 66px;
+    gap: 1.5rem;
+  }
+  .navbar-brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 1.18rem;
+    color: #fff;
+    letter-spacing: .01em;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+  .navbar-brand i { color: var(--ocre-500); font-size: 1.3rem; }
+  .nav-links { display: flex; gap: .3rem; margin-left: 1rem; }
+  .nav-links a {
+    color: rgba(255,255,255,.72);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: .92rem;
+    padding: .5rem .85rem;
+    border-radius: 7px;
+    transition: all .15s;
+  }
+  .nav-links a:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .nav-links a.active {
+    color: #fff;
+    background: rgba(255,255,255,.06);
+    box-shadow: inset 0 -2px 0 var(--clay-500);
+  }
+  .navbar-logos {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    background: rgba(255,255,255,.95);
+    padding: .35rem .7rem;
+    border-radius: 8px;
+  }
+  .logo-ph {
+    font-size: .62rem;
+    font-weight: 700;
+    color: var(--soil-800);
+    text-align: center;
+    line-height: 1.15;
+    letter-spacing: .03em;
+  }
+  .logo-ph .big { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; display: block; }
+
+  /* ---- Faixa de horizontes (assinatura) ---- */
+  .horizon-bar {
+    height: 5px;
+    display: flex;
+  }
+  .horizon-bar span { flex: 1; }
+  .horizon-bar .o  { background: var(--hz-o); }
+  .horizon-bar .a  { background: var(--hz-a); }
+  .horizon-bar .b  { background: var(--hz-b); }
+  .horizon-bar .bc { background: var(--hz-bc); }
+  .horizon-bar .c  { background: var(--hz-c); }
+
+  /* ---- Hero ---- */
+  .hero {
+    background: linear-gradient(180deg, var(--sand-100), var(--sand-50));
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+  }
+  /* Mini perfil de solo (coluna de horizontes) */
+  .soil-profile {
+    width: 30px;
+    height: 64px;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(58,42,30,.22);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .soil-profile span { width: 100%; }
+  .soil-profile .o  { flex: .8; background: var(--hz-o); }
+  .soil-profile .a  { flex: 1.1; background: var(--hz-a); }
+  .soil-profile .b  { flex: 1.5; background: var(--hz-b); }
+  .soil-profile .bc { flex: 1.1; background: var(--hz-bc); }
+  .soil-profile .c  { flex: 1; background: var(--hz-c); }
+  .hero-label {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--clay-600);
+  }
+  .hero-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--soil-900);
+    margin: .1rem 0 0;
+  }
+  .hero-sub { font-size: .9rem; color: var(--ink-500); margin-top: .1rem; }
+
+  /* ---- Main ---- */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 2rem 1.5rem 1rem; }
+  .page-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--soil-900);
+    margin: 0 0 .2rem;
+    letter-spacing: -.01em;
+  }
+  .page-sub { color: var(--ink-500); font-size: .95rem; margin: 0 0 1.6rem; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    box-shadow: 0 2px 10px rgba(58,42,30,.06);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .85rem 1.15rem;
+    background: var(--sand-50);
+    border-bottom: 1px solid var(--line);
+    border-left: 3px solid var(--clay-600);
+  }
+  .card-head i {
+    color: var(--clay-600);
+    font-size: 1.1rem;
+  }
+  .card-head h3 {
+    margin: 0;
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--soil-700);
+  }
+  .card-body { padding: 1.15rem 1.15rem 1.3rem; }
+
+  .field { margin-bottom: .95rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--ink-700);
+    margin-bottom: .3rem;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    border: 1px solid #d3c6b3;
+    border-radius: 8px;
+    padding: .55rem .7rem;
+    font-family: inherit;
+    font-size: .92rem;
+    color: var(--ink-900);
+    background: #fffdfa;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--clay-600);
+    box-shadow: 0 0 0 3px rgba(166,85,47,.13);
+  }
+  .field-row { display: grid; grid-template-columns: 2fr 1fr; gap: .7rem; }
+
+  .btn-primary {
+    background: var(--clay-600);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: .65rem 1.4rem;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: .95rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(166,85,47,.25);
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: var(--soil-700); }
+
+  .consent {
+    background: var(--sand-100);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 1rem 1.1rem;
+    font-size: .82rem;
+    line-height: 1.55;
+    color: var(--ink-700);
+    margin-bottom: 1rem;
+  }
+  .consent strong { color: var(--soil-800); }
+  .consent .chk { margin-top: .7rem; display: flex; gap: .5rem; align-items: flex-start; }
+
+  /* ---- Footer ---- */
+  footer { margin-top: 2.5rem; }
+  .footer-body {
+    background: var(--soil-900);
+    color: rgba(255,255,255,.72);
+  }
+  .footer-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 2rem;
+    font-size: .85rem;
+    line-height: 1.6;
+  }
+  .footer-inner h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 .6rem;
+  }
+  .footer-inner a { color: var(--hz-c); text-decoration: none; }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,.1);
+    margin-top: 1.4rem;
+    padding-top: 1rem;
+    font-size: .78rem;
+    color: rgba(255,255,255,.5);
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <span class="navbar-brand"><i class="bi bi-layers-half"></i> Análises de Solo</span>
+    <div class="nav-links">
+      <a href="#" class="active">Solicitar análise</a>
+      <a href="#">Recepção</a>
+    </div>
+    <div class="navbar-logos">
+      <div class="logo-ph"><span class="big">UFV</span>Univ. Federal<br>de Viçosa</div>
+      <div class="logo-ph"><span class="big">DPS</span>Depto. de<br>Solos</div>
+    </div>
+  </nav>
+  <div class="horizon-bar"><span class="o"></span><span class="a"></span><span class="b"></span><span class="bc"></span><span class="c"></span></div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="soil-profile"><span class="o"></span><span class="a"></span><span class="b"></span><span class="bc"></span><span class="c"></span></div>
+      <div>
+        <div class="hero-label">Laboratório de Análises de Solo</div>
+        <div class="hero-title">Departamento de Solos · Universidade Federal de Viçosa</div>
+        <div class="hero-sub">Solicitação digital de análises — solo, vegetal, CHN, absorção atômica e ICP-OES.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="wrap">
+    <h1 class="page-title">Nova solicitação</h1>
+    <p class="page-sub">Preencha os dados do solicitante uma vez e adicione uma ou mais amostras.</p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-head"><i class="bi bi-person-vcard"></i><h3>Dados do solicitante</h3></div>
+        <div class="card-body">
+          <div class="field"><label>Nome completo</label><input placeholder=""></div>
+          <div class="field"><label>E-mail</label><input placeholder=""></div>
+          <div class="field"><label>Telefone</label><input placeholder=""></div>
+          <div class="field"><label>CPF/CNPJ</label><input placeholder=""></div>
+          <div class="field"><label>Endereço</label><input placeholder=""></div>
+          <div class="field field-row">
+            <div><label>Cidade</label><input></div>
+            <div><label>UF</label><input value="MG"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><i class="bi bi-mortarboard"></i><h3>Vínculo e observações</h3></div>
+        <div class="card-body">
+          <div class="field"><label>Vínculo</label>
+            <select><option>Agricultor/produtor</option><option>Iniciação científica</option><option>Mestrado</option><option>Doutorado</option></select>
+          </div>
+          <div class="field"><label>Instituição/departamento/laboratório</label><input></div>
+          <div class="field"><label>Professor/orientador</label><input></div>
+          <div class="field"><label>Observações</label><textarea rows="4"></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:1.3rem"></div>
+
+    <div class="card">
+      <div class="card-head"><i class="bi bi-eyedropper"></i><h3>Amostras</h3></div>
+      <div class="card-body">
+        <div class="field field-row" style="grid-template-columns:2fr 1fr;">
+          <div><label>Referência da amostra</label><input placeholder="Ex.: Talhão 1 — 0-20 cm"></div>
+          <div><label>Material</label><select><option>Solo</option><option>Vegetal</option></select></div>
+        </div>
+        <div class="field"><label>Localização <span style="color:var(--ink-500);font-weight:400;">(opcional — coordenadas em WGS84)</span></label>
+          <div style="height:120px;border-radius:8px;border:1px solid var(--line);background:linear-gradient(135deg,#e8e0d0,#d8c9b0);display:flex;align-items:center;justify-content:center;color:var(--ink-500);font-size:.85rem;"><i class="bi bi-geo-alt" style="margin-right:.4rem;color:var(--clay-600);"></i> mapa interativo (satélite + rótulos)</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:1.6rem"></div>
+
+    <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1.2rem;color:var(--soil-900);margin:0 0 .7rem;">Privacidade e envio</h3>
+    <div class="consent">
+      <strong>Tratamento de dados pessoais.</strong> Os dados informados são coletados pelo Departamento de Solos da UFV exclusivamente para identificação do solicitante, processamento da análise e comunicação dos resultados, conforme a Lei nº 13.709/2018 (LGPD).
+      <div class="chk"><input type="checkbox" id="c"><label for="c" style="font-weight:500;">Li e concordo com o tratamento dos meus dados pessoais para os fins descritos.</label></div>
+    </div>
+    <button class="btn-primary"><i class="bi bi-send" style="margin-right:.4rem;"></i>Enviar solicitação</button>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="horizon-bar"><span class="o"></span><span class="a"></span><span class="b"></span><span class="bc"></span><span class="c"></span></div>
+    <div class="footer-body">
+      <div class="footer-inner">
+        <div>
+          <h4>Laboratório de Análises de Solo</h4>
+          Departamento de Solos (DPS)<br>Universidade Federal de Viçosa<br>Av. P. H. Rolfs s/n, Campus UFV, Viçosa-MG
+        </div>
+        <div>
+          <h4>Contato</h4>
+          <a href="#">laboratorio.solos@ufv.br</a><br>(31) 3612-0000<br>Seg. a sex., 8h–17h
+        </div>
+        <div>
+          <h4>Sistema</h4>
+          Solicitação digital de análises<br>Versão piloto 0.1<br><a href="#">Código no GitHub</a>
+        </div>
+      </div>
+      <div class="footer-inner" style="grid-template-columns:1fr;padding-top:0;">
+        <div class="footer-bottom">
+          <span>© 2026 Departamento de Solos — UFV</span>
+          <span>Feito para fins acadêmicos e de pesquisa</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
