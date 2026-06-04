@@ -14,6 +14,11 @@ mod_solicitante_ui <- function(id) {
         textInput(ns("cpf_cnpj"), "CPF/CNPJ"),
         textInput(ns("endereco"), "Endereço"),
         bslib::layout_columns(
+          col_widths = c(8, 4),
+          textInput(ns("bairro"), "Bairro"),
+          textInput(ns("cep"), "CEP")
+        ),
+        bslib::layout_columns(
           textInput(ns("cidade_solicitante"), "Cidade"),
           textInput(ns("uf_solicitante"), "UF", value = "MG")
         )
@@ -30,6 +35,14 @@ mod_solicitante_ui <- function(id) {
             "Doutorado" = "doutorado",
             "Outro" = "outro"
           )
+        ),
+        conditionalPanel(
+          condition = sprintf("input['%s'] === 'outro'", ns("vinculo")),
+          textInput(ns("vinculo_outro"), "Especifique o vínculo")
+        ),
+        conditionalPanel(
+          condition = sprintf("['ic','mestrado','doutorado'].includes(input['%s'])", ns("vinculo")),
+          textInput(ns("matricula"), "Matrícula")
         ),
         textInput(ns("instituicao"), "Instituição/departamento/laboratório"),
         textInput(ns("orientador"), "Professor/orientador"),
@@ -70,9 +83,13 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
           telefone = input$telefone,
           cpf_cnpj = input$cpf_cnpj,
           endereco = input$endereco,
+          bairro = input$bairro,
+          cep = input$cep,
           cidade_solicitante = input$cidade_solicitante,
           uf_solicitante = input$uf_solicitante,
           vinculo = input$vinculo,
+          vinculo_outro = input$vinculo_outro,
+          matricula = input$matricula,
           instituicao = input$instituicao,
           orientador = input$orientador,
           observacoes = input$observacoes
@@ -140,7 +157,17 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
         nome_solicitante = payload$solicitante$nome_solicitante,
         email = payload$solicitante$email,
         telefone = payload$solicitante$telefone,
+        cpf_cnpj = payload$solicitante$cpf_cnpj %||% "",
+        endereco = payload$solicitante$endereco %||% "",
+        bairro = payload$solicitante$bairro %||% "",
+        cep = payload$solicitante$cep %||% "",
         cidade_solicitante = payload$solicitante$cidade_solicitante,
+        uf_solicitante = payload$solicitante$uf_solicitante %||% "",
+        vinculo = payload$solicitante$vinculo %||% "",
+        vinculo_outro = payload$solicitante$vinculo_outro %||% "",
+        matricula = payload$solicitante$matricula %||% "",
+        instituicao = payload$solicitante$instituicao %||% "",
+        orientador = payload$solicitante$orientador %||% "",
         status_interno = "Recebida",
         data_entrada_lab = "",
         numero_laboratorio = "",
