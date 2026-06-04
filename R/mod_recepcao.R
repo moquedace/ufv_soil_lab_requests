@@ -73,6 +73,119 @@ recepcao_senha <- function() {
   Sys.getenv("LAB_RECEPTION_PASSWORD", unset = "dps2024")
 }
 
+blank_value <- function(v) {
+  if (is.null(v) || !length(v)) return(TRUE)
+  s <- as.character(v[[1]])
+  is.na(s) || !nzchar(trimws(s)) || identical(trimws(s), "NA")
+}
+
+detail_dd <- function(label, value) {
+  if (blank_value(value)) return(NULL)
+  htmltools::tagList(
+    htmltools::tags$dt(label),
+    htmltools::tags$dd(as.character(value[[1]]))
+  )
+}
+
+recepcao_code_label <- function(value, map) {
+  v <- as.character(value %||% "")
+  if (v %in% names(map)) unname(map[[v]]) else v
+}
+
+vinculo_recepcao_label <- function(vinculo, vinculo_outro = "") {
+  base <- recepcao_code_label(vinculo, list(
+    agricultor = "Agricultor/produtor",
+    ic = "Iniciação científica",
+    mestrado = "Mestrado",
+    doutorado = "Doutorado",
+    outro = "Outro"
+  ))
+  if (identical(as.character(vinculo %||% ""), "outro") && !blank_value(vinculo_outro)) {
+    paste0("Outro: ", vinculo_outro)
+  } else {
+    base
+  }
+}
+
+clean_text <- function(v) {
+  s <- trimws(as.character(v[[1]] %||% ""))
+  if (is.na(s) || identical(s, "NA")) "" else s
+}
+
+format_request_address <- function(request) {
+  cidade <- clean_text(request$cidade_solicitante)
+  uf <- clean_text(request$uf_solicitante)
+  cidade_uf <- if (nzchar(cidade) && nzchar(uf)) {
+    paste0(cidade, "/", uf)
+  } else {
+    paste0(cidade, uf)
+  }
+  parts <- c(
+    clean_text(request$endereco),
+    clean_text(request$bairro),
+    cidade_uf,
+    clean_text(request$cep)
+  )
+  parts <- parts[nzchar(parts)]
+  paste(parts, collapse = " · ")
+}
+
+format_sample_location <- function(sample) {
+  lat <- suppressWarnings(as.numeric(sample$latitude_wgs84[[1]]))
+  lng <- suppressWarnings(as.numeric(sample$longitude_wgs84[[1]]))
+  if (is.na(lat) || is.na(lng)) return("")
+  tipo <- recepcao_code_label(sample$tipo_localizacao[[1]], list(
+    exata = "exato", aproximada = "aproximado", municipio_regiao = "município/região"
+  ))
+  sprintf("%.5f, %.5f (%s)", lat, lng, tipo)
+}
+
+format_sample_detail <- function(sample, sample_analyses) {
+  grupos <- strsplit(as.character(sample$grupos_analise[[1]] %||% ""), ";")[[1]]
+  is_v <- "vegetal" %in% grupos
+  is_chn <- "chn" %in% grupos
+  is_aa <- any(c("absorcao_atomica", "icp_oes") %in% grupos)
+
+  municipio <- trimws(paste(
+    c(sample$municipio_amostra[[1]] %||% "", sample$uf_amostra[[1]] %||% ""),
+    collapse = "/"
+  ))
+  if (municipio == "/") municipio <- ""
+
+  analises_txt <- if (nrow(sample_analyses)) {
+    paste(sample_analyses$analise_nome, collapse = ", ")
+  } else {
+    ""
+  }
+
+  div(
+    class = "review-box", style = "margin-bottom:.8rem;",
+    tags$dl(
+      detail_dd("Referência", sample$referencia_amostra),
+      detail_dd("Material", sample$tipo_material),
+      detail_dd("Município", municipio),
+      detail_dd("Localidade", sample$localidade_descricao),
+      detail_dd("Coordenadas", format_sample_location(sample)),
+      if (is_v) detail_dd("Tipo vegetal", sample$tipo_amostra_vegetal),
+      if (is_v) detail_dd("Cultura/planta", sample$cultura_planta),
+      if (is_chn) detail_dd("Carbonato", recepcao_code_label(sample$carbonato_presente[[1]], list(sim = "Sim", nao = "Não", nao_sei = "Não sei"))),
+      if (is_chn) detail_dd("%C estimado", sample$percentual_c_estimado),
+      if (is_chn) detail_dd("%N estimado", sample$percentual_n_estimado),
+      if (is_chn) detail_dd("Nº do projeto", sample$numero_registro_projeto),
+      if (is_aa) detail_dd("Elementos", sample$elementos_aa_icp),
+      if (is_aa) detail_dd("Digestão", sample$tipo_digestao),
+      if (is_aa) detail_dd("Vol. após digestão", sample$volume_apos_digestao),
+      if (is_aa) detail_dd("Alíquota", sample$aliquota),
+      if (is_aa) detail_dd("Volume final", sample$volume_final),
+      if (is_aa) detail_dd("Diluição", sample$diluicao),
+      if (is_aa) detail_dd("Departamento", recepcao_code_label(sample$departamento_origem[[1]], list(dps = "DPS - Solos UFV", outro = "Outro"))),
+      if (is_aa) detail_dd("Projeto registrado", recepcao_code_label(sample$projeto_registrado[[1]], list(sim = "Sim", nao = "Não"))),
+      if (is_aa) detail_dd("Nº do projeto", sample$numero_registro_projeto_aa),
+      detail_dd("Análises", analises_txt)
+    )
+  )
+}
+
 status_badge_html <- function(status) {
   status <- as.character(status %||% "")
   if (!nzchar(status)) status <- "Recebida"
@@ -232,17 +345,37 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
       request <- requests[selected[1], , drop = FALSE]
       request_id <- request$solicitacao_id[[1]]
       samples <- store()$amostras[store()$amostras$solicitacao_id == request_id, , drop = FALSE]
-      analyses <- store()$analises[store()$analises$amostra_id %in% samples$amostra_id, , drop = FALSE]
+      all_analyses <- store()$analises
 
       tagList(
-        tags$dl(
-          tags$dt("Solicitante"), tags$dd(request$nome_solicitante[[1]]),
-          tags$dt("Contato"), tags$dd(paste(request$email[[1]], request$telefone[[1]])),
-          tags$dt("Status"), tags$dd(HTML(status_badge_html(request$status_interno[[1]]))),
-          tags$dt("Solicitação"), tags$dd(request_id),
-          tags$dt("Amostras"), tags$dd(nrow(samples)),
-          tags$dt("Análises"), tags$dd(nrow(analyses))
-        )
+        div(
+          class = "review-box",
+          tags$dl(
+            detail_dd("Solicitante", request$nome_solicitante),
+            detail_dd("E-mail", request$email),
+            detail_dd("Telefone", request$telefone),
+            detail_dd("CPF/CNPJ", request$cpf_cnpj),
+            detail_dd("Endereço", format_request_address(request)),
+            detail_dd("Vínculo", vinculo_recepcao_label(request$vinculo[[1]], request$vinculo_outro[[1]] %||% "")),
+            detail_dd("Matrícula", request$matricula),
+            detail_dd("Instituição", request$instituicao),
+            detail_dd("Orientador", request$orientador),
+            detail_dd("Observações", request$observacoes_solicitante),
+            tags$dt("Status"), tags$dd(HTML(status_badge_html(request$status_interno[[1]]))),
+            detail_dd("Enviada em", request$data_hora_envio),
+            detail_dd("Protocolo", request_id)
+          )
+        ),
+        h4(sprintf("Amostras (%d)", nrow(samples))),
+        if (nrow(samples)) {
+          lapply(seq_len(nrow(samples)), function(i) {
+            s <- samples[i, , drop = FALSE]
+            sa <- all_analyses[all_analyses$amostra_id == s$amostra_id[[1]], , drop = FALSE]
+            format_sample_detail(s, sa)
+          })
+        } else {
+          p(class = "muted-help", "Nenhuma amostra vinculada.")
+        }
       )
     })
 

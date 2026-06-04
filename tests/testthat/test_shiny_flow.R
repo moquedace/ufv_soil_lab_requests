@@ -120,6 +120,9 @@ test_that("solicitante can add and submit one sample with multiple groups", {
   expect_equal(app$get_value(export = "solicitacoes_count"), 2)
   expect_equal(app$get_value(export = "amostras_count"), 2)
   expect_equal(app$get_value(export = "analises_count"), 3)
+
+  # apos enviar, o formulario de amostras deve ser limpo (reset)
+  expect_equal(app$get_value(export = "solicitante-review_sample_count"), 0)
 })
 
 test_that("solicitante can duplicate and remove samples before submit", {
