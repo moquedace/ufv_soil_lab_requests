@@ -478,7 +478,7 @@ app_ui <- function() {
         div(
           class = "footer-bottom",
           tags$span("© 2026 Departamento de Solos — UFV"),
-          tags$span("Feito para fins acadêmicos e de pesquisa")
+          tags$span("Sistema desenvolvido no âmbito da tese de doutorado de Clara Glória Oliveira Baldi")
         )
       )
     ),
