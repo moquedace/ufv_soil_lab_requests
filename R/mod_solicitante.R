@@ -77,7 +77,10 @@ mod_solicitante_ui <- function(id) {
           )
         ),
         br(),
-        actionButton(ns("enviar"), "Enviar solicitação", class = "btn btn-primary"),
+        actionButton(
+          ns("enviar"), "Enviar solicitação", class = "btn btn-primary",
+          onclick = "var b=this; setTimeout(function(){ if(!b.classList.contains('disabled')){ b.dataset.lbl=b.innerHTML; b.innerHTML='Enviando…'; } }, 0);"
+        ),
         br(), br(),
         uiOutput(ns("confirmacao"))
       )
@@ -87,7 +90,8 @@ mod_solicitante_ui <- function(id) {
 
 mod_solicitante_server <- function(id, app_config, store, persist_store = function(new_store) invisible(FALSE)) {
   moduleServer(id, function(input, output, session) {
-    samples <- mod_amostras_server("amostras", app_config)
+    reset_amostras <- reactiveVal(0)
+    samples <- mod_amostras_server("amostras", app_config, reset_trigger = reactive(reset_amostras()))
     last_submission_id <- reactiveVal("")
     ultimo_envio_ts <- reactiveVal(0)
 
@@ -168,7 +172,10 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
 
     observeEvent(input$enviar, {
       shinyjs::disable("enviar")
-      on.exit(shinyjs::enable("enviar"))
+      on.exit({
+        shinyjs::enable("enviar")
+        updateActionButton(session, "enviar", label = "Enviar solicitação")
+      })
 
       # guarda contra duplo envio: ignora cliques em sequencia rapida
       agora <- as.numeric(Sys.time())
@@ -305,9 +312,24 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
       persist_store(new_store)
       last_submission_id(request_id)
 
-      showNotification("Solicitação registrada.", type = "message")
+      # limpa o formulario para uma nova solicitacao
+      campos_texto <- c("nome_solicitante", "email", "telefone", "cpf_cnpj", "endereco",
+                        "bairro", "cep", "cidade_solicitante", "vinculo_outro", "matricula",
+                        "instituicao", "orientador")
+      lapply(campos_texto, \(campo) { updateTextInput(session, campo, value = "") })
+      updateTextAreaInput(session, "observacoes", value = "")
+      updateSelectInput(session, "vinculo", selected = "agricultor")
+      updateCheckboxInput(session, "consentimento_lgpd", value = FALSE)
+      reset_amostras(reset_amostras() + 1)
+
+      showNotification(paste0("Solicitação enviada com sucesso. Protocolo: ", request_id), type = "message", duration = 8)
       output$confirmacao <- renderUI({
-        div(class = "alert alert-success", paste("Solicitação enviada:", request_id))
+        div(
+          class = "alert alert-success",
+          tags$strong("Solicitação enviada. "),
+          "Protocolo: ", tags$strong(request_id), tags$br(),
+          "Guarde este número. Você já pode registrar uma nova solicitação."
+        )
       })
     })
 

@@ -108,3 +108,66 @@ test_that("status_badge_html escapes html in the status text", {
   expect_false(grepl("<script>", out, fixed = TRUE))
   expect_match(out, "&lt;script&gt;")
 })
+
+test_that("blank_value detects empty, NA and literal NA", {
+  expect_true(blank_value(NULL))
+  expect_true(blank_value(""))
+  expect_true(blank_value("   "))
+  expect_true(blank_value(NA))
+  expect_true(blank_value(NA_character_))
+  expect_true(blank_value("NA"))
+  expect_false(blank_value("Viçosa"))
+  expect_false(blank_value(3.5))
+})
+
+test_that("detail_dd returns NULL for blank and tags for filled", {
+  expect_null(detail_dd("Cidade", ""))
+  expect_null(detail_dd("Cidade", NA))
+  out <- detail_dd("Cidade", "Viçosa")
+  expect_false(is.null(out))
+})
+
+test_that("recepcao_code_label maps codes and falls back to raw", {
+  m <- list(sim = "Sim", nao = "Não")
+  expect_equal(recepcao_code_label("sim", m), "Sim")
+  expect_equal(recepcao_code_label("nao", m), "Não")
+  expect_equal(recepcao_code_label("outro_valor", m), "outro_valor")
+})
+
+test_that("vinculo_recepcao_label expands codes and handles outro", {
+  expect_equal(vinculo_recepcao_label("mestrado"), "Mestrado")
+  expect_equal(vinculo_recepcao_label("doutorado"), "Doutorado")
+  expect_equal(vinculo_recepcao_label("outro", "Bolsista PNPD"), "Outro: Bolsista PNPD")
+  expect_equal(vinculo_recepcao_label("outro", ""), "Outro")
+})
+
+test_that("format_request_address joins non-empty parts only", {
+  req <- data.frame(
+    endereco = "Rua A, 10", bairro = "Centro",
+    cidade_solicitante = "Viçosa", uf_solicitante = "MG", cep = "36570-000",
+    stringsAsFactors = FALSE
+  )
+  out <- format_request_address(req)
+  expect_match(out, "Rua A, 10")
+  expect_match(out, "Centro")
+  expect_match(out, "Viçosa/MG")
+  expect_match(out, "36570-000")
+
+  req2 <- data.frame(
+    endereco = "", bairro = "", cidade_solicitante = "Viçosa",
+    uf_solicitante = "MG", cep = "", stringsAsFactors = FALSE
+  )
+  expect_equal(format_request_address(req2), "Viçosa/MG")
+})
+
+test_that("format_sample_location formats coordinates or returns empty", {
+  s <- data.frame(latitude_wgs84 = -20.7546, longitude_wgs84 = -42.8825,
+                  tipo_localizacao = "aproximada", stringsAsFactors = FALSE)
+  out <- format_sample_location(s)
+  expect_match(out, "-20.75460")
+  expect_match(out, "aproximado")
+
+  s_na <- data.frame(latitude_wgs84 = NA_real_, longitude_wgs84 = NA_real_,
+                     tipo_localizacao = "aproximada", stringsAsFactors = FALSE)
+  expect_equal(format_sample_location(s_na), "")
+})

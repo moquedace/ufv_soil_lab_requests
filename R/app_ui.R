@@ -371,6 +371,16 @@ app_ui <- function() {
             background: #ecf6f0;
             color: #1f6d4a;
           }
+          .info-soil {
+            border-radius: 9px;
+            border: 1px solid var(--line);
+            background: var(--sand-100);
+            color: var(--soil-700);
+            padding: .7rem .9rem;
+            font-size: .86rem;
+            margin-bottom: 1rem;
+          }
+          .info-soil strong { color: var(--soil-800); }
           hr { border-color: var(--line); opacity: 1; margin: 1.35rem 0; }
           /* ---- Footer ---- */
           .footer-body { background: var(--soil-900); color: rgba(255, 255, 255, .72); }

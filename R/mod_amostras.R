@@ -95,11 +95,22 @@ mod_amostras_ui <- function(id) {
   )
 }
 
-mod_amostras_server <- function(id, app_config) {
+mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) {
   moduleServer(id, function(input, output, session) {
     marker <- reactiveVal(NULL)
     samples <- reactiveVal(list())
     editing_index <- reactiveVal(NULL)
+
+    observeEvent(reset_trigger(), {
+      samples(list())
+      editing_index(NULL)
+      marker(NULL)
+      updateTextInput(session, "referencia_amostra", value = "")
+      updateTextInput(session, "municipio_amostra", value = "")
+      updateTextInput(session, "localidade_descricao", value = "")
+      updateCheckboxGroupInput(session, "grupos_analise", selected = "solo_rotina")
+      leaflet::leafletProxy("mapa", session = session) |> leaflet::clearMarkers()
+    }, ignoreInit = TRUE)
 
     output$acao_amostra_ui <- renderUI({
       if (is.null(editing_index())) {
@@ -193,8 +204,7 @@ mod_amostras_server <- function(id, app_config) {
       tagList(
         if (is_icp) {
           div(
-            class = "alert",
-            style = "background:#f0f4f2; border-color:#ccd7d1; color:#3f4b47;",
+            class = "info-soil",
             tags$strong("Equipamento: ICP-OES OPTIMA 8300."),
             " Amostras devem ser entregues em solução após digestão. Consulte o laboratório para dúvidas sobre preparo."
           )
