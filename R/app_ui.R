@@ -2,6 +2,7 @@ app_ui <- function() {
   bslib::page_navbar(
     id = "navbar_principal",
     title = "Análises de Solo · DPS-UFV",
+    fillable = FALSE,
     theme = bslib::bs_theme(
       version = 5,
       primary = "#a6552f",
