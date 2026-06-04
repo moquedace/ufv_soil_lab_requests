@@ -16,7 +16,8 @@ fill_requester <- function(app, name = "Teste Automatizado") {
     `solicitante-nome_solicitante` = name,
     `solicitante-email` = "teste@example.com",
     `solicitante-telefone` = "(31) 99999-0000",
-    `solicitante-cidade_solicitante` = "Vicosa"
+    `solicitante-cidade_solicitante` = "Vicosa",
+    `solicitante-consentimento_lgpd` = TRUE
   )
 }
 
@@ -39,6 +40,50 @@ test_that("solicitante cannot submit without samples", {
   on.exit(app$stop(), add = TRUE)
 
   fill_requester(app)
+  app$click("solicitante-enviar")
+  app$wait_for_idle()
+
+  expect_equal(app$get_value(export = "solicitante-ultimo_envio_id"), "")
+  expect_equal(app$get_value(export = "solicitacoes_count"), 1)
+})
+
+test_that("solicitante cannot submit without LGPD consent", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("solicitacao_sem_consentimento")
+  on.exit(app$stop(), add = TRUE)
+
+  app$set_inputs(
+    `solicitante-nome_solicitante` = "Teste Sem Consentimento",
+    `solicitante-email` = "teste@example.com",
+    `solicitante-consentimento_lgpd` = FALSE
+  )
+  fill_sample_base(app)
+  app$set_inputs(`solicitante-amostras-analises_solo_rotina` = "rotina_basica")
+  app$click("solicitante-amostras-adicionar")
+  app$wait_for_idle()
+  app$click("solicitante-enviar")
+  app$wait_for_idle()
+
+  expect_equal(app$get_value(export = "solicitante-ultimo_envio_id"), "")
+  expect_equal(app$get_value(export = "solicitacoes_count"), 1)
+})
+
+test_that("solicitante cannot submit with invalid email", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("solicitacao_email_invalido")
+  on.exit(app$stop(), add = TRUE)
+
+  app$set_inputs(
+    `solicitante-nome_solicitante` = "Teste Email Invalido",
+    `solicitante-email` = "email-sem-arroba",
+    `solicitante-consentimento_lgpd` = TRUE
+  )
+  fill_sample_base(app)
+  app$set_inputs(`solicitante-amostras-analises_solo_rotina` = "rotina_basica")
+  app$click("solicitante-amostras-adicionar")
+  app$wait_for_idle()
   app$click("solicitante-enviar")
   app$wait_for_idle()
 
@@ -252,7 +297,8 @@ test_that("solicitante saves bairro, cep and matricula on submit", {
     `solicitante-cep` = "36570-900",
     `solicitante-vinculo` = "mestrado",
     `solicitante-matricula` = "12345",
-    `solicitante-instituicao` = "DPS/UFV"
+    `solicitante-instituicao` = "DPS/UFV",
+    `solicitante-consentimento_lgpd` = TRUE
   )
 
   fill_sample_base(app)

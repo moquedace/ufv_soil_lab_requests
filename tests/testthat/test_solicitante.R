@@ -69,3 +69,30 @@ test_that("count_review_locations handles empty review tables", {
   expect_equal(count_review_locations(data.frame(localizacao_mapa = c("sim", "nao", "sim"))), 2)
   expect_equal(count_review_locations(data.frame(localizacao_mapa = c("nao", "nao"))), 0)
 })
+
+test_that("is_valid_email accepts well-formed addresses", {
+  expect_true(is_valid_email("fulano@ufv.br"))
+  expect_true(is_valid_email("a.b-c_d@dominio.com.br"))
+  expect_true(is_valid_email("teste123@example.org"))
+})
+
+test_that("is_valid_email rejects malformed addresses", {
+  expect_false(is_valid_email("sem-arroba"))
+  expect_false(is_valid_email("fulano@gmail"))
+  expect_false(is_valid_email("fulano@.com"))
+  expect_false(is_valid_email("@dominio.com"))
+  expect_false(is_valid_email("fulano @dominio.com"))
+  expect_false(is_valid_email(""))
+})
+
+test_that("is_valid_phone accepts numbers with enough digits", {
+  expect_true(is_valid_phone("(31) 99999-0000"))
+  expect_true(is_valid_phone("3138991234"))
+  expect_true(is_valid_phone("31 8888-7777"))
+})
+
+test_that("is_valid_phone rejects numbers that are too short", {
+  expect_false(is_valid_phone("1234"))
+  expect_false(is_valid_phone("(31)"))
+  expect_false(is_valid_phone(""))
+})

@@ -9,6 +9,7 @@ app_ui <- function() {
       base_font = bslib::font_google("Inter")
     ),
     header = tags$head(
+      shinyjs::useShinyjs(),
       tags$style(
         "
         :root {

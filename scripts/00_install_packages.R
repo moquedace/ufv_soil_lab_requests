@@ -1,5 +1,6 @@
 packages <- c(
   "shiny",
+  "shinyjs",
   "bslib",
   "leaflet",
   "DT",

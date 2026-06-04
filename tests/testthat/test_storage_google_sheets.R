@@ -20,6 +20,7 @@ test_that("sheet_columns solicitacoes contains all required fields", {
     "email", "telefone", "cpf_cnpj", "endereco", "bairro", "cep",
     "cidade_solicitante", "uf_solicitante", "vinculo", "vinculo_outro",
     "matricula", "instituicao", "orientador", "observacoes_solicitante",
+    "consentimento_aceito",
     "status_interno", "data_entrada_lab", "numero_laboratorio",
     "custo_total_lab", "forma_pagamento_lab", "pedido_numero_lab",
     "observacoes_internas"
