@@ -107,16 +107,31 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
       sample_count <- length(payload$amostras)
       location_count <- sum(vapply(payload$amostras, has_sample_coordinates, logical(1)))
 
+      s <- payload$solicitante
+      vinculo_display <- if (identical(s$vinculo %||% "", "outro") && nzchar(s$vinculo_outro %||% "")) {
+        paste0("Outro: ", s$vinculo_outro)
+      } else {
+        s$vinculo %||% ""
+      }
+
       tagList(
         tags$dl(
           tags$dt("Solicitante"),
-          tags$dd(payload$solicitante$nome_solicitante %||% "Nao informado"),
+          tags$dd(s$nome_solicitante %||% "Não informado"),
           tags$dt("Contato"),
-          tags$dd(paste(payload$solicitante$email %||% "", payload$solicitante$telefone %||% "")),
+          tags$dd(paste(s$email %||% "", s$telefone %||% "")),
+          tags$dt("Cidade/UF"),
+          tags$dd(paste(s$cidade_solicitante %||% "", s$uf_solicitante %||% "")),
+          tags$dt("Vínculo"),
+          tags$dd(vinculo_display),
+          if (nzchar(s$matricula %||% "")) tagList(tags$dt("Matrícula"), tags$dd(s$matricula)),
+          if (nzchar(s$instituicao %||% "")) tagList(tags$dt("Instituição"), tags$dd(s$instituicao)),
+          if (nzchar(s$orientador %||% "")) tagList(tags$dt("Orientador"), tags$dd(s$orientador)),
           tags$dt("Amostras"),
           tags$dd(sample_count),
-          tags$dt("Amostras com ponto no mapa"),
-          tags$dd(paste0(location_count, " de ", sample_count))
+          tags$dt("Com localização no mapa"),
+          tags$dd(paste0(location_count, " de ", sample_count)),
+          if (nzchar(s$observacoes %||% "")) tagList(tags$dt("Observações"), tags$dd(s$observacoes))
         )
       )
     })
@@ -168,6 +183,7 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
         matricula = payload$solicitante$matricula %||% "",
         instituicao = payload$solicitante$instituicao %||% "",
         orientador = payload$solicitante$orientador %||% "",
+        observacoes_solicitante = payload$solicitante$observacoes %||% "",
         status_interno = "Recebida",
         data_entrada_lab = "",
         numero_laboratorio = "",

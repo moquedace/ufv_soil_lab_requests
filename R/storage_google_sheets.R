@@ -18,6 +18,7 @@ sheet_columns <- list(
     "matricula",
     "instituicao",
     "orientador",
+    "observacoes_solicitante",
     "status_interno",
     "data_entrada_lab",
     "numero_laboratorio",
