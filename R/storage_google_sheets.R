@@ -157,7 +157,7 @@ read_google_sheet <- function(sheet_id, sheet) {
   columns <- sheet_columns[[sheet]]
   missing <- setdiff(columns, names(data))
   for (column in missing) {
-    data[[column]] <- NA
+    data[[column]] <- rep(NA, nrow(data))
   }
 
   data[, columns, drop = FALSE]
@@ -184,7 +184,7 @@ write_google_sheet <- function(sheet_id, sheet, data) {
   columns <- sheet_columns[[sheet]]
   missing <- setdiff(columns, names(data))
   for (column in missing) {
-    data[[column]] <- NA
+    data[[column]] <- rep(NA, nrow(data))
   }
 
   data <- data[, columns, drop = FALSE]
@@ -207,7 +207,7 @@ append_google_rows <- function(sheet_id, sheet, data) {
   columns <- sheet_columns[[sheet]]
   missing <- setdiff(columns, names(data))
   for (column in missing) {
-    data[[column]] <- NA
+    data[[column]] <- rep(NA, nrow(data))
   }
 
   data <- data[, columns, drop = FALSE]
