@@ -2,7 +2,10 @@ library(shiny)
 
 source("R/config.R")
 if (is_test_mode()) {
-  Sys.setenv(USE_GOOGLE_SHEETS = "false")
+  Sys.setenv(
+    USE_GOOGLE_SHEETS = "false",
+    LAB_RECEPTION_PASSWORD = "dps2024"
+  )
 } else {
   load_project_env()
 }
