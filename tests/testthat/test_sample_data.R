@@ -57,3 +57,31 @@ test_that("safe_rbind preserves row order", {
   result <- safe_rbind(a, b)
   expect_equal(result$id, 1:5)
 })
+
+test_that("next_request_id has expected prefix and random suffix", {
+  id <- next_request_id()
+  expect_match(id, "^SOL-[0-9]{8}-[0-9]{6}-[0-9a-f]{4}$")
+})
+
+test_that("next_request_id produces unique ids within the same second", {
+  ids <- replicate(200, next_request_id())
+  # com sufixo aleatorio, colisoes no mesmo segundo devem ser raras
+  expect_gt(length(unique(ids)), 190)
+})
+
+test_that("next_sample_id derives from request id for global uniqueness", {
+  request_id <- "SOL-20260604-101500-a1b2"
+  expect_equal(next_sample_id(request_id, 1), "AMS-20260604-101500-a1b2-001")
+  expect_equal(next_sample_id(request_id, 12), "AMS-20260604-101500-a1b2-012")
+})
+
+test_that("sample ids from different requests never collide", {
+  id1 <- next_sample_id("SOL-20260604-101500-aaaa", 1)
+  id2 <- next_sample_id("SOL-20260604-101500-bbbb", 1)
+  expect_false(identical(id1, id2))
+})
+
+test_that("random_suffix returns lowercase hex of requested length", {
+  expect_match(random_suffix(4), "^[0-9a-f]{4}$")
+  expect_match(random_suffix(8), "^[0-9a-f]{8}$")
+})

@@ -60,10 +60,15 @@ safe_rbind <- function(a, b) {
   rbind(a[, all_cols, drop = FALSE], b[, all_cols, drop = FALSE])
 }
 
-next_request_id <- function() {
-  paste0("SOL-", format(Sys.time(), "%Y%m%d-%H%M%S"))
+random_suffix <- function(n = 4) {
+  paste0(sample(c(0:9, letters[1:6]), n, replace = TRUE), collapse = "")
 }
 
-next_sample_id <- function(index) {
-  paste0("AMS-", format(Sys.time(), "%Y%m%d%H%M%S"), "-", sprintf("%03d", index))
+next_request_id <- function() {
+  paste0("SOL-", format(Sys.time(), "%Y%m%d-%H%M%S"), "-", random_suffix())
+}
+
+next_sample_id <- function(request_id, index) {
+  base <- sub("^SOL-", "", request_id)
+  paste0("AMS-", base, "-", sprintf("%03d", index))
 }

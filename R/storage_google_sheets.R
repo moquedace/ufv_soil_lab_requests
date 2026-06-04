@@ -19,6 +19,7 @@ sheet_columns <- list(
     "instituicao",
     "orientador",
     "observacoes_solicitante",
+    "consentimento_aceito",
     "status_interno",
     "data_entrada_lab",
     "numero_laboratorio",

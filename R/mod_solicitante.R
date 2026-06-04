@@ -61,6 +61,21 @@ mod_solicitante_ui <- function(id) {
         DT::DTOutput(ns("resumo_amostras"))
       ),
       div(
+        h3("Privacidade e envio"),
+        div(
+          class = "review-box",
+          style = "font-size:.82rem; line-height:1.5;",
+          tags$p(
+            style = "margin-bottom:.6rem;",
+            tags$strong("Tratamento de dados pessoais. "),
+            "Os dados informados (nome, contato, documento e endereço) são coletados pelo Departamento de Solos da UFV exclusivamente para identificação do solicitante, processamento da análise e comunicação dos resultados. São armazenados de forma restrita e não compartilhados com terceiros. Você pode solicitar acesso, correção ou exclusão dos seus dados pelo contato do laboratório, conforme a Lei nº 13.709/2018 (LGPD)."
+          ),
+          checkboxInput(
+            ns("consentimento_lgpd"),
+            "Li e concordo com o tratamento dos meus dados pessoais para os fins descritos acima.",
+            value = FALSE
+          )
+        ),
         br(),
         actionButton(ns("enviar"), "Enviar solicitação", class = "btn btn-primary"),
         br(), br(),
@@ -74,6 +89,7 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
   moduleServer(id, function(input, output, session) {
     samples <- mod_amostras_server("amostras", app_config)
     last_submission_id <- reactiveVal("")
+    ultimo_envio_ts <- reactiveVal(0)
 
     request_payload <- reactive({
       list(
@@ -151,10 +167,30 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
     )
 
     observeEvent(input$enviar, {
+      shinyjs::disable("enviar")
+      on.exit(shinyjs::enable("enviar"))
+
+      # guarda contra duplo envio: ignora cliques em sequencia rapida
+      agora <- as.numeric(Sys.time())
+      if (agora - ultimo_envio_ts() < 5) {
+        return()
+      }
+
       payload <- request_payload()
 
       if (!nzchar(payload$solicitante$nome_solicitante %||% "")) {
         showNotification("Informe o nome do solicitante.", type = "error")
+        return()
+      }
+
+      if (!isTRUE(input$consentimento_lgpd)) {
+        showNotification("É necessário concordar com o tratamento dos dados pessoais para enviar.", type = "error")
+        return()
+      }
+
+      email_informado <- trimws(payload$solicitante$email %||% "")
+      if (nzchar(email_informado) && !is_valid_email(email_informado)) {
+        showNotification("E-mail em formato inválido. Verifique antes de enviar.", type = "error")
         return()
       }
 
@@ -163,6 +199,12 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
         return()
       }
 
+      telefone_informado <- trimws(payload$solicitante$telefone %||% "")
+      if (nzchar(telefone_informado) && !is_valid_phone(telefone_informado)) {
+        showNotification("Telefone parece incompleto. A solicitação será enviada, confira o contato.", type = "warning")
+      }
+
+      ultimo_envio_ts(agora)
       request_id <- next_request_id()
       current <- store()
 
@@ -184,6 +226,7 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
         instituicao = payload$solicitante$instituicao %||% "",
         orientador = payload$solicitante$orientador %||% "",
         observacoes_solicitante = payload$solicitante$observacoes %||% "",
+        consentimento_aceito = "sim",
         status_interno = "Recebida",
         data_entrada_lab = "",
         numero_laboratorio = "",
@@ -197,7 +240,7 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
       new_samples <- do.call(rbind, lapply(seq_along(payload$amostras), function(index) {
         sample <- payload$amostras[[index]]
         data.frame(
-          amostra_id = next_sample_id(index),
+          amostra_id = next_sample_id(request_id, index),
           solicitacao_id = request_id,
           ordem_amostra = index,
           referencia_amostra = sample$referencia_amostra,
@@ -270,6 +313,15 @@ mod_solicitante_server <- function(id, app_config, store, persist_store = functi
 
     exportTestValues(ultimo_envio_id = last_submission_id())
   })
+}
+
+is_valid_email <- function(x) {
+  grepl("^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$", x)
+}
+
+is_valid_phone <- function(x) {
+  digits <- gsub("[^0-9]", "", x)
+  nchar(digits) >= 8
 }
 
 build_review_table <- function(samples) {
