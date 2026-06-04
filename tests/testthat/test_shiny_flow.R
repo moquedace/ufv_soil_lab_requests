@@ -274,6 +274,9 @@ test_that("recepcao is not authenticated by default and accepts correct password
 
   expect_false(app$get_value(export = "recepcao-autenticado"))
 
+  app$set_inputs(navbar_principal = "Recepção")
+  app$wait_for_idle()
+
   app$set_inputs(`recepcao-senha_recepcao` = "errada")
   app$click("recepcao-entrar_recepcao")
   app$wait_for_idle()
