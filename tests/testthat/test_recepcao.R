@@ -4,12 +4,20 @@ test_that("ensure_request_internal_columns adds missing internal columns", {
     status_interno = "Recebida",
     stringsAsFactors = FALSE
   )
-
   result <- ensure_request_internal_columns(data)
-
   expect_true("numero_laboratorio" %in% names(result))
   expect_true("observacoes_internas" %in% names(result))
   expect_equal(result$numero_laboratorio[[1]], "")
+})
+
+test_that("ensure_request_internal_columns preserves existing values", {
+  data <- data.frame(
+    solicitacao_id = "SOL-1",
+    numero_laboratorio = "LAB-99",
+    stringsAsFactors = FALSE
+  )
+  result <- ensure_request_internal_columns(data)
+  expect_equal(result$numero_laboratorio[[1]], "LAB-99")
 })
 
 test_that("field_value handles missing and NA values", {
@@ -18,10 +26,14 @@ test_that("field_value handles missing and NA values", {
     numero_laboratorio = "LAB-1",
     stringsAsFactors = FALSE
   )
-
   expect_equal(field_value(data, "numero_laboratorio"), "LAB-1")
   expect_equal(field_value(data, "status_interno", "Recebida"), "Recebida")
   expect_equal(field_value(data, "campo_inexistente", "x"), "x")
+})
+
+test_that("field_value returns fallback for empty string", {
+  data <- data.frame(custo_total_lab = "", stringsAsFactors = FALSE)
+  expect_equal(field_value(data, "custo_total_lab", "0"), "")
 })
 
 test_that("update_request_internal_fields changes only the selected request", {
@@ -40,4 +52,40 @@ test_that("update_request_internal_fields changes only the selected request", {
   expect_equal(result$numero_laboratorio[[1]], "LAB-TESTE-001")
   expect_equal(result$status_interno[[1]], "Em analise")
   expect_equal(result$observacoes_internas[[1]], "Teste automatizado")
+})
+
+test_that("update_request_internal_fields ignores unknown request id", {
+  data <- sample_store()$solicitacoes
+  result <- update_request_internal_fields(
+    data,
+    request_id = "ID-QUE-NAO-EXISTE",
+    values = list(numero_laboratorio = "LAB-X")
+  )
+  expect_equal(result$numero_laboratorio[[1]], "")
+})
+
+test_that("update_request_internal_fields does not change non-editable fields", {
+  data <- sample_store()$solicitacoes
+  result <- update_request_internal_fields(
+    data,
+    request_id = "SOL-20260603-0001",
+    values = list(nome_solicitante = "Nome alterado")
+  )
+  expect_equal(result$nome_solicitante[[1]], "Exemplo de solicitante")
+})
+
+test_that("recepcao_senha returns default when env var not set", {
+  withr::local_envvar(c(LAB_RECEPTION_PASSWORD = ""))
+  expect_equal(recepcao_senha(), "dps2024")
+})
+
+test_that("recepcao_senha returns custom value when env var is set", {
+  withr::local_envvar(c(LAB_RECEPTION_PASSWORD = "senha_customizada"))
+  expect_equal(recepcao_senha(), "senha_customizada")
+})
+
+test_that("recepcao_senha comparison is exact (case-sensitive)", {
+  withr::local_envvar(c(LAB_RECEPTION_PASSWORD = "DPS2024"))
+  expect_false(identical("dps2024", recepcao_senha()))
+  expect_true(identical("DPS2024", recepcao_senha()))
 })

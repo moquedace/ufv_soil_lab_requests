@@ -288,7 +288,8 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
     })
 
     exportTestValues(
-      ultimo_salvamento_id = last_saved_request()
+      ultimo_salvamento_id = last_saved_request(),
+      autenticado = autenticado()
     )
 
     output$baixar_csv <- downloadHandler(

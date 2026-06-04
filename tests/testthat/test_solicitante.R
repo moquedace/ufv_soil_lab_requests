@@ -10,24 +10,62 @@ test_that("build_review_table summarizes samples", {
     grupos_analise = c("solo_rotina", "vegetal"),
     analises_nomes = c("Rotina", "Nitrogenio")
   )
-
   result <- build_review_table(list(sample))
-
   expect_equal(nrow(result), 1)
   expect_equal(result$referencia[[1]], "Talhao 1")
   expect_equal(result$localizacao_mapa[[1]], "sim")
   expect_match(result$grupos[[1]], "solo_rotina")
 })
 
-test_that("has_sample_coordinates detects missing coordinates", {
-  sample <- list(latitude_wgs84 = NA_real_, longitude_wgs84 = -42)
-  expect_false(has_sample_coordinates(sample))
+test_that("build_review_table returns empty data frame for empty list", {
+  expect_equal(nrow(build_review_table(list())), 0)
+})
 
-  sample <- list(latitude_wgs84 = -20, longitude_wgs84 = -42)
-  expect_true(has_sample_coordinates(sample))
+test_that("build_review_table marks localizacao_mapa as nao without coordinates", {
+  sample <- list(
+    referencia_amostra = "Sem coord",
+    tipo_material = "Vegetal",
+    municipio_amostra = "Vicosa",
+    uf_amostra = "MG",
+    latitude_wgs84 = NA_real_,
+    longitude_wgs84 = NA_real_,
+    tipo_localizacao = "municipio_regiao",
+    grupos_analise = "vegetal",
+    analises_nomes = "Nitrogenio"
+  )
+  result <- build_review_table(list(sample))
+  expect_equal(result$localizacao_mapa[[1]], "nao")
+})
+
+test_that("build_review_table with multiple samples", {
+  make_sample <- function(ref, lat = NA_real_) {
+    list(
+      referencia_amostra = ref,
+      tipo_material = "Solo",
+      municipio_amostra = "Vicosa",
+      uf_amostra = "MG",
+      latitude_wgs84 = lat,
+      longitude_wgs84 = if (is.na(lat)) NA_real_ else -42.88,
+      tipo_localizacao = "aproximada",
+      grupos_analise = "solo_rotina",
+      analises_nomes = "Rotina"
+    )
+  }
+  samples <- list(make_sample("A", -20.75), make_sample("B"), make_sample("C", -20.76))
+  result <- build_review_table(samples)
+  expect_equal(nrow(result), 3)
+  expect_equal(count_review_locations(result), 2)
+})
+
+test_that("has_sample_coordinates detects missing coordinates", {
+  expect_false(has_sample_coordinates(list(latitude_wgs84 = NA_real_, longitude_wgs84 = -42)))
+  expect_false(has_sample_coordinates(list(latitude_wgs84 = -20, longitude_wgs84 = NA_real_)))
+  expect_false(has_sample_coordinates(list(latitude_wgs84 = NULL, longitude_wgs84 = -42)))
+  expect_true(has_sample_coordinates(list(latitude_wgs84 = -20, longitude_wgs84 = -42)))
 })
 
 test_that("count_review_locations handles empty review tables", {
   expect_equal(count_review_locations(data.frame()), 0)
-  expect_equal(count_review_locations(data.frame(localizacao_mapa = c("sim", "nao"))), 1)
+  expect_equal(count_review_locations(data.frame(localizacao_mapa = c("sim", "nao", "sim"))), 2)
+  expect_equal(count_review_locations(data.frame(localizacao_mapa = c("nao", "nao"))), 0)
 })

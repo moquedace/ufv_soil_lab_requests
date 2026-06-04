@@ -237,6 +237,54 @@ test_that("solicitante can submit absorcao atomica sample with preparo fields", 
   expect_equal(app$get_value(export = "analises_count"), 2)
 })
 
+test_that("solicitante saves bairro, cep and matricula on submit", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("solicitacao_campos_extras")
+  on.exit(app$stop(), add = TRUE)
+
+  app$set_inputs(
+    `solicitante-nome_solicitante` = "Teste Campos Extras",
+    `solicitante-email` = "teste@example.com",
+    `solicitante-telefone` = "(31) 99999-0000",
+    `solicitante-cidade_solicitante` = "Vicosa",
+    `solicitante-bairro` = "Centro",
+    `solicitante-cep` = "36570-900",
+    `solicitante-vinculo` = "mestrado",
+    `solicitante-matricula` = "12345",
+    `solicitante-instituicao` = "DPS/UFV"
+  )
+
+  fill_sample_base(app)
+  app$set_inputs(`solicitante-amostras-analises_solo_rotina` = "rotina_basica")
+  app$click("solicitante-amostras-adicionar")
+  app$wait_for_idle()
+  app$click("solicitante-enviar")
+  app$wait_for_idle()
+
+  expect_match(app$get_value(export = "solicitante-ultimo_envio_id"), "SOL-", fixed = TRUE)
+  expect_equal(app$get_value(export = "solicitacoes_count"), 2)
+})
+
+test_that("recepcao is not authenticated by default and accepts correct password", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("recepcao_autenticacao")
+  on.exit(app$stop(), add = TRUE)
+
+  expect_false(app$get_value(export = "recepcao-autenticado"))
+
+  app$set_inputs(`recepcao-senha_recepcao` = "errada")
+  app$click("recepcao-entrar_recepcao")
+  app$wait_for_idle()
+  expect_false(app$get_value(export = "recepcao-autenticado"))
+
+  app$set_inputs(`recepcao-senha_recepcao` = "dps2024")
+  app$click("recepcao-entrar_recepcao")
+  app$wait_for_idle()
+  expect_true(app$get_value(export = "recepcao-autenticado"))
+})
+
 test_that("recepcao exposes sample data in local test mode", {
   skip_if_not_installed("shinytest2")
 
