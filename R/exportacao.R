@@ -13,7 +13,7 @@ flatten_store <- function(store) {
     analises_txt <- stats::aggregate(
       analise_nome ~ amostra_id,
       data = analises,
-      FUN = function(values) paste(unique(values), collapse = " | ")
+      FUN = \(values) { paste(unique(values), collapse = " | ") }
     )
     names(analises_txt)[2] <- "analises_solicitadas"
     merged <- merge(merged, analises_txt, by = "amostra_id", all.x = TRUE)
