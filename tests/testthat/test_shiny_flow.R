@@ -316,6 +316,20 @@ test_that("solicitante saves bairro, cep and matricula on submit", {
   expect_equal(app$get_value(export = "solicitacoes_count"), 2)
 })
 
+test_that("orientador is only shown for academic requester links", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("solicitacao_vinculo_condicional")
+  on.exit(app$stop(), add = TRUE)
+
+  expect_false(app$get_js("document.getElementById('solicitante-orientador').offsetParent !== null"))
+
+  app$set_inputs(`solicitante-vinculo` = "mestrado")
+  app$wait_for_idle()
+
+  expect_true(app$get_js("document.getElementById('solicitante-orientador').offsetParent !== null"))
+})
+
 test_that("recepcao is not authenticated by default and accepts correct password", {
   skip_if_not_installed("shinytest2")
 

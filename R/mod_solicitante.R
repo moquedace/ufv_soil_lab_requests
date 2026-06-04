@@ -44,8 +44,11 @@ mod_solicitante_ui <- function(id) {
           condition = sprintf("['ic','mestrado','doutorado'].includes(input['%s'])", ns("vinculo")),
           textInput(ns("matricula"), "Matrícula")
         ),
-        textInput(ns("instituicao"), "Instituição/departamento/laboratório"),
-        textInput(ns("orientador"), "Professor/orientador"),
+        textInput(ns("instituicao"), "Instituição/departamento/laboratório (opcional)"),
+        conditionalPanel(
+          condition = sprintf("['ic','mestrado','doutorado'].includes(input['%s'])", ns("vinculo")),
+          textInput(ns("orientador"), "Professor/orientador")
+        ),
         textAreaInput(ns("observacoes"), "Observações", rows = 4)
       )
     ),
