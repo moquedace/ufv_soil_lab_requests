@@ -2,6 +2,12 @@ mod_recepcao_ui <- function(id) {
   ns <- NS(id)
 
   tagList(
+    uiOutput(ns("recepcao_conteudo"))
+  )
+}
+
+mod_recepcao_conteudo_ui <- function(ns) {
+  tagList(
     h2(class = "section-title", "Recepção de amostras"),
     p(class = "muted-help", "Consulte solicitações, filtre por grupo de análise e exporte os dados recebidos."),
     bslib::layout_columns(
@@ -63,11 +69,45 @@ mod_recepcao_ui <- function(id) {
   )
 }
 
+recepcao_senha <- function() {
+  Sys.getenv("LAB_RECEPTION_PASSWORD", unset = "dps2024")
+}
+
 mod_recepcao_server <- function(id, app_config, store, persist_requests = function(solicitacoes) invisible(FALSE)) {
   moduleServer(id, function(input, output, session) {
+    autenticado <- reactiveVal(FALSE)
+
+    output$recepcao_conteudo <- renderUI({
+      if (!autenticado()) {
+        div(
+          style = "max-width:360px; margin:3rem auto;",
+          bslib::card(
+            bslib::card_header("Acesso restrito"),
+            p(class = "muted-help", "Esta área é exclusiva para a equipe de recepção do laboratório."),
+            passwordInput(session$ns("senha_recepcao"), "Senha"),
+            actionButton(session$ns("entrar_recepcao"), "Entrar", class = "btn btn-primary"),
+            uiOutput(session$ns("erro_senha"))
+          )
+        )
+      } else {
+        mod_recepcao_conteudo_ui(session$ns)
+      }
+    })
+
+    observeEvent(input$entrar_recepcao, {
+      if (identical(input$senha_recepcao, recepcao_senha())) {
+        autenticado(TRUE)
+      } else {
+        output$erro_senha <- renderUI({
+          p(style = "color:#c0392b; font-size:.88rem; margin-top:.4rem;", "Senha incorreta.")
+        })
+      }
+    })
+
     last_saved_request <- reactiveVal("")
 
     observe({
+      req(autenticado())
       current <- store()
       statuses <- sort(unique(current$solicitacoes$status_interno))
       statuses <- statuses[!is.na(statuses) & nzchar(statuses)]
@@ -82,6 +122,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
     })
 
     analysis_data <- reactive({
+      req(autenticado())
       filter_reception_data(
         data = flatten_store_by_analysis(store()),
         search = trimws(input$busca %||% ""),
@@ -91,6 +132,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
     })
 
     request_data <- reactive({
+      req(autenticado())
       data <- store()$solicitacoes
       if (!nrow(data)) {
         return(data)

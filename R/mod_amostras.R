@@ -51,6 +51,12 @@ mod_amostras_ui <- function(id) {
         textInput(ns("uf_amostra"), "UF", value = "MG"),
         textInput(ns("localidade_descricao"), "Propriedade, comunidade, talhão ou referência")
       ),
+      div(
+        class = "muted-help",
+        style = "margin-bottom:.6rem; font-size:.82rem;",
+        tags$strong("Localização opcional."),
+        " As coordenadas são salvas em graus decimais WGS84 e utilizadas exclusivamente para identificação do ponto de coleta das amostras."
+      ),
       bslib::layout_columns(
         col_widths = c(8, 4),
         div(class = "map-box", leaflet::leafletOutput(ns("mapa"), height = 420)),
@@ -226,8 +232,13 @@ mod_amostras_server <- function(id, app_config) {
 
     output$mapa <- leaflet::renderLeaflet({
       leaflet::leaflet() |>
-        leaflet::addProviderTiles(leaflet::providers$OpenStreetMap) |>
-        leaflet::setView(lng = -42.8825, lat = -20.7546, zoom = 10)
+        leaflet::addProviderTiles(leaflet::providers$Esri.WorldImagery, group = "Satélite") |>
+        leaflet::addProviderTiles(leaflet::providers$OpenStreetMap, group = "Mapa") |>
+        leaflet::setView(lng = -42.8825, lat = -20.7546, zoom = 10) |>
+        leaflet::addLayersControl(
+          baseGroups = c("Satélite", "Mapa"),
+          options = leaflet::layersControlOptions(collapsed = FALSE)
+        )
     })
 
     observeEvent(input$buscar_lugar, {
