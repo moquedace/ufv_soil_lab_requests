@@ -12,6 +12,7 @@ packages <- c(
   "writexl",
   "googlesheets4",
   "googledrive",
+  "rsconnect",
   "testthat",
   "shinytest2",
   "withr"

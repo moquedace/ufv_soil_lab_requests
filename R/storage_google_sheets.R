@@ -95,9 +95,25 @@ ensure_google_auth <- function() {
     stop("Instale o pacote 'googlesheets4'.", call. = FALSE)
   }
 
+  service_account_path <- Sys.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+  if (nzchar(service_account_path)) {
+    if (!file.exists(service_account_path)) {
+      stop(
+        "Arquivo de service account nao encontrado em GOOGLE_SERVICE_ACCOUNT_JSON: ",
+        service_account_path,
+        call. = FALSE
+      )
+    }
+
+    googlesheets4::gs4_auth(path = service_account_path)
+    return(invisible(TRUE))
+  }
+
   if (!googlesheets4::gs4_has_token()) {
     googlesheets4::gs4_auth()
   }
+
+  invisible(TRUE)
 }
 
 setup_google_sheets <- function(sheet_id = google_sheet_id()) {
