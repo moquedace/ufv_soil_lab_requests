@@ -234,11 +234,18 @@ mod_amostras_server <- function(id, app_config) {
       leaflet::leaflet() |>
         leaflet::addProviderTiles(leaflet::providers$Esri.WorldImagery, group = "Satélite") |>
         leaflet::addProviderTiles(leaflet::providers$OpenStreetMap, group = "Mapa") |>
+        leaflet::addProviderTiles(
+          leaflet::providers$CartoDB.PositronOnlyLabels,
+          group = "Rótulos",
+          options = leaflet::tileOptions(opacity = 0.85)
+        ) |>
         leaflet::setView(lng = -42.8825, lat = -20.7546, zoom = 10) |>
         leaflet::addLayersControl(
           baseGroups = c("Satélite", "Mapa"),
+          overlayGroups = "Rótulos",
           options = leaflet::layersControlOptions(collapsed = FALSE)
-        )
+        ) |>
+        leaflet::showGroup("Rótulos")
     })
 
     observeEvent(input$buscar_lugar, {
