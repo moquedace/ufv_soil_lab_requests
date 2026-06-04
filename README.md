@@ -139,6 +139,63 @@ clear_google_store(confirm = TRUE)                 # apaga tudo, mantém cabeça
 
 ---
 
+## Deploy piloto no shinyapps.io
+
+Para publicar o app no shinyapps.io, primeiro configure sua conta no RStudio/R:
+
+```r
+install.packages("rsconnect")
+rsconnect::setAccountInfo(
+  name = "SUA_CONTA",
+  token = "SEU_TOKEN",
+  secret = "SEU_SECRET"
+)
+```
+
+O comando completo fica disponível em **shinyapps.io > Account > Tokens**.
+
+### Google Sheets no servidor
+
+No shinyapps.io não há navegador interativo para autenticar o Google Sheets. Para
+gravar na planilha durante o teste hospedado, use uma **service account** do
+Google Cloud:
+
+1. Crie/baixe o arquivo JSON da service account.
+2. Salve localmente em `credentials/google-service-account.json`.
+3. Compartilhe a planilha Google com o e-mail `client_email` que aparece dentro
+   desse JSON, com permissão de edição.
+4. No `.Renviron`, confira:
+
+```text
+USE_GOOGLE_SHEETS=true
+GOOGLE_SHEET_ID=1BazpE4_5vJK2siiWxKBBFzptSj_GE9m_XWu2fLRapbA
+GOOGLE_SERVICE_ACCOUNT_JSON=credentials/google-service-account.json
+LAB_RECEPTION_PASSWORD=uma_senha_nao_padrao
+SHINYAPPS_APP_NAME=ufv-soil-lab-requests
+```
+
+O arquivo `credentials/google-service-account.json` e o `.Renviron` são ignorados
+pelo Git. O script de deploy envia esses arquivos somente no bundle do
+shinyapps.io.
+
+### Publicar
+
+Depois de rodar os testes localmente:
+
+```r
+source("scripts/02_run_tests.R")
+source("scripts/07_deploy_shinyapps.R")
+```
+
+Se algo falhar no ambiente hospedado, consulte os logs no painel do shinyapps.io
+ou pelo R:
+
+```r
+rsconnect::showLogs(appName = "ufv-soil-lab-requests")
+```
+
+---
+
 ## Testes
 
 ```r
