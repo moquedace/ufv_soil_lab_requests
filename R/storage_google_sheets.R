@@ -105,7 +105,9 @@ ensure_google_auth <- function() {
       )
     }
 
-    googlesheets4::gs4_auth(path = service_account_path)
+    if (!googlesheets4::gs4_has_token()) {
+      googlesheets4::gs4_auth(path = service_account_path)
+    }
     return(invisible(TRUE))
   }
 
