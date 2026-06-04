@@ -13,7 +13,7 @@ mod_recepcao_conteudo_ui <- function(ns) {
     bslib::layout_columns(
       col_widths = c(8, 4),
       bslib::card(
-        bslib::card_header("Filtros"),
+        bslib::card_header(bsicons::bs_icon("funnel"), "Filtros"),
         textInput(ns("busca"), "Buscar", placeholder = "Solicitante, município, amostra, análise..."),
         bslib::layout_columns(
           selectInput(ns("status"), "Status", choices = c("Todos" = "todos")),
@@ -21,7 +21,7 @@ mod_recepcao_conteudo_ui <- function(ns) {
         )
       ),
       bslib::card(
-        bslib::card_header("Resumo"),
+        bslib::card_header(bsicons::bs_icon("clipboard-data"), "Resumo"),
         verbatimTextOutput(ns("resumo_store")),
         tags$hr(),
         downloadButton(ns("baixar_csv"), "Exportar CSV"),
@@ -31,11 +31,11 @@ mod_recepcao_conteudo_ui <- function(ns) {
     bslib::layout_columns(
       col_widths = c(7, 5),
       bslib::card(
-        bslib::card_header("Solicitações"),
+        bslib::card_header(bsicons::bs_icon("inbox"), "Solicitações"),
         DT::DTOutput(ns("solicitacoes"))
       ),
       bslib::card(
-        bslib::card_header("Detalhe selecionado"),
+        bslib::card_header(bsicons::bs_icon("file-text"), "Detalhe selecionado"),
         uiOutput(ns("detalhe_solicitacao")),
         tags$hr(),
         h4("Campos internos"),
@@ -63,7 +63,7 @@ mod_recepcao_conteudo_ui <- function(ns) {
       )
     ),
     bslib::card(
-      bslib::card_header("Amostras por análise"),
+      bslib::card_header(bsicons::bs_icon("eyedropper"), "Amostras por análise"),
       DT::DTOutput(ns("analises"))
     )
   )
@@ -71,6 +71,23 @@ mod_recepcao_conteudo_ui <- function(ns) {
 
 recepcao_senha <- function() {
   Sys.getenv("LAB_RECEPTION_PASSWORD", unset = "dps2024")
+}
+
+status_badge_html <- function(status) {
+  status <- as.character(status %||% "")
+  if (!nzchar(status)) status <- "Recebida"
+  cls <- switch(
+    status,
+    "Recebida" = "status-recebida",
+    "Aguardando amostra" = "status-aguardando",
+    "Em análise" = "status-em-analise",
+    "Em analise" = "status-em-analise",
+    "Finalizada" = "status-finalizada",
+    "Cancelada" = "status-cancelada",
+    "Teste" = "status-teste",
+    "status-teste"
+  )
+  sprintf('<span class="status-badge %s">%s</span>', cls, htmltools::htmlEscape(status))
 }
 
 mod_recepcao_server <- function(id, app_config, store, persist_requests = function(solicitacoes) invisible(FALSE)) {
@@ -82,7 +99,7 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
         div(
           style = "max-width:360px; margin:3rem auto;",
           bslib::card(
-            bslib::card_header("Acesso restrito"),
+            bslib::card_header(bsicons::bs_icon("lock"), "Acesso restrito"),
             p(class = "muted-help", "Esta área é exclusiva para a equipe de recepção do laboratório."),
             passwordInput(session$ns("senha_recepcao"), "Senha"),
             actionButton(session$ns("entrar_recepcao"), "Entrar", class = "btn btn-primary"),
@@ -161,12 +178,23 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
         status_interno = "Status"
       )
       cols <- intersect(names(label_map), names(data))
+      escape_cols <- TRUE
       if (length(cols)) {
         data <- data[, cols, drop = FALSE]
         names(data) <- label_map[names(data)]
+        if ("Status" %in% names(data)) {
+          data$Status <- vapply(data$Status, status_badge_html, character(1))
+          # escapa todas as colunas exceto Status (evita XSS nos dados de usuario)
+          escape_cols <- which(names(data) != "Status")
+        }
       }
-      data
-    }, selection = "single", options = list(pageLength = 8, order = list(list(1, "desc"))))
+      DT::datatable(
+        data,
+        selection = "single",
+        escape = escape_cols,
+        options = list(pageLength = 8, order = list(list(1, "desc")))
+      )
+    })
 
     output$analises <- DT::renderDT({
       data <- analysis_data()
@@ -210,10 +238,10 @@ mod_recepcao_server <- function(id, app_config, store, persist_requests = functi
         tags$dl(
           tags$dt("Solicitante"), tags$dd(request$nome_solicitante[[1]]),
           tags$dt("Contato"), tags$dd(paste(request$email[[1]], request$telefone[[1]])),
-          tags$dt("Status"), tags$dd(request$status_interno[[1]]),
-          tags$dt("Solicitacao"), tags$dd(request_id),
+          tags$dt("Status"), tags$dd(HTML(status_badge_html(request$status_interno[[1]]))),
+          tags$dt("Solicitação"), tags$dd(request_id),
           tags$dt("Amostras"), tags$dd(nrow(samples)),
-          tags$dt("Analises"), tags$dd(nrow(analyses))
+          tags$dt("Análises"), tags$dd(nrow(analyses))
         )
       )
     })

@@ -7,7 +7,7 @@ mod_solicitante_ui <- function(id) {
     bslib::layout_columns(
       col_widths = c(6, 6),
       bslib::card(
-        bslib::card_header("Dados do solicitante"),
+        bslib::card_header(bsicons::bs_icon("person-vcard"), "Dados do solicitante"),
         textInput(ns("nome_solicitante"), "Nome completo"),
         textInput(ns("email"), "E-mail"),
         textInput(ns("telefone"), "Telefone"),
@@ -24,7 +24,7 @@ mod_solicitante_ui <- function(id) {
         )
       ),
       bslib::card(
-        bslib::card_header("Vínculo e observações"),
+        bslib::card_header(bsicons::bs_icon("mortarboard"), "Vínculo e observações"),
         selectInput(
           ns("vinculo"),
           "Vínculo",

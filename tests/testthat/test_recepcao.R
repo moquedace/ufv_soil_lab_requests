@@ -89,3 +89,22 @@ test_that("recepcao_senha comparison is exact (case-sensitive)", {
   expect_false(identical("dps2024", recepcao_senha()))
   expect_true(identical("DPS2024", recepcao_senha()))
 })
+
+test_that("status_badge_html maps known statuses to css classes", {
+  expect_match(status_badge_html("Recebida"), "status-recebida")
+  expect_match(status_badge_html("Em análise"), "status-em-analise")
+  expect_match(status_badge_html("Finalizada"), "status-finalizada")
+  expect_match(status_badge_html("Cancelada"), "status-cancelada")
+  expect_match(status_badge_html("Aguardando amostra"), "status-aguardando")
+})
+
+test_that("status_badge_html falls back for unknown or empty status", {
+  expect_match(status_badge_html(""), "status-recebida")
+  expect_match(status_badge_html("Qualquer Coisa"), "status-teste")
+})
+
+test_that("status_badge_html escapes html in the status text", {
+  out <- status_badge_html("<script>x</script>")
+  expect_false(grepl("<script>", out, fixed = TRUE))
+  expect_match(out, "&lt;script&gt;")
+})

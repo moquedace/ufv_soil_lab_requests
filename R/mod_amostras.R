@@ -2,7 +2,7 @@ mod_amostras_ui <- function(id) {
   ns <- NS(id)
 
   tagList(
-    h3("Amostras"),
+    h3(bsicons::bs_icon("eyedropper"), " Amostras"),
     div(
       class = "sample-card",
       bslib::layout_columns(
