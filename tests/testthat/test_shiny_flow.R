@@ -176,6 +176,67 @@ test_that("solicitante can submit CHN with organic carbon and carbonate flag", {
   expect_equal(app$get_value(export = "analises_count"), 3)
 })
 
+test_that("solicitante can submit vegetal sample with tipo and cultura", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("solicitacao_vegetal")
+  on.exit(app$stop(), add = TRUE)
+
+  fill_requester(app, name = "Teste Vegetal")
+  fill_sample_base(app, reference = "Folha eucalipto", groups = "vegetal")
+
+  app$set_inputs(
+    `solicitante-amostras-analises_vegetal` = "nitrogenio",
+    `solicitante-amostras-tipo_amostra_vegetal` = "folha",
+    `solicitante-amostras-cultura_planta` = "Eucalipto",
+    `solicitante-amostras-test_map_lat` = -20.7546,
+    `solicitante-amostras-test_map_lng` = -42.8825
+  )
+
+  app$click("solicitante-amostras-adicionar")
+  app$wait_for_idle()
+  app$click("solicitante-enviar")
+  app$wait_for_idle()
+
+  expect_match(app$get_value(export = "solicitante-ultimo_envio_id"), "SOL-", fixed = TRUE)
+  expect_equal(app$get_value(export = "solicitacoes_count"), 2)
+  expect_equal(app$get_value(export = "amostras_count"), 2)
+  expect_equal(app$get_value(export = "analises_count"), 2)
+})
+
+test_that("solicitante can submit absorcao atomica sample with preparo fields", {
+  skip_if_not_installed("shinytest2")
+
+  app <- new_app_driver("solicitacao_absorcao_atomica")
+  on.exit(app$stop(), add = TRUE)
+
+  fill_requester(app, name = "Teste AA")
+  fill_sample_base(app, reference = "Extrato AA teste", groups = "absorcao_atomica")
+
+  app$set_inputs(
+    `solicitante-amostras-analises_absorcao_atomica` = "elementos_absorcao_atomica",
+    `solicitante-amostras-elementos_aa_icp` = "Ca, Mg, Fe",
+    `solicitante-amostras-tipo_digestao` = "Nitrico-perclorica",
+    `solicitante-amostras-volume_apos_digestao` = 50,
+    `solicitante-amostras-aliquota` = 5,
+    `solicitante-amostras-volume_final` = 25,
+    `solicitante-amostras-departamento_origem` = "dps",
+    `solicitante-amostras-projeto_registrado` = "nao",
+    `solicitante-amostras-test_map_lat` = -20.7546,
+    `solicitante-amostras-test_map_lng` = -42.8825
+  )
+
+  app$click("solicitante-amostras-adicionar")
+  app$wait_for_idle()
+  app$click("solicitante-enviar")
+  app$wait_for_idle()
+
+  expect_match(app$get_value(export = "solicitante-ultimo_envio_id"), "SOL-", fixed = TRUE)
+  expect_equal(app$get_value(export = "solicitacoes_count"), 2)
+  expect_equal(app$get_value(export = "amostras_count"), 2)
+  expect_equal(app$get_value(export = "analises_count"), 2)
+})
+
 test_that("recepcao exposes sample data in local test mode", {
   skip_if_not_installed("shinytest2")
 
