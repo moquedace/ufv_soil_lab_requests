@@ -1,5 +1,6 @@
 app_ui <- function() {
   bslib::page_navbar(
+    id = "navbar_principal",
     title = "Solicitação de análises - DPS/UFV",
     theme = bslib::bs_theme(
       version = 5,
