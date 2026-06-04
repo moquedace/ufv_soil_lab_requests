@@ -1,7 +1,8 @@
 new_app_driver <- function(name) {
   Sys.setenv(
     UFV_SOIL_LAB_TEST_MODE = "true",
-    USE_GOOGLE_SHEETS = "false"
+    USE_GOOGLE_SHEETS = "false",
+    LAB_RECEPTION_PASSWORD = "dps2024"
   )
 
   shinytest2::AppDriver$new(
