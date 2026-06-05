@@ -81,16 +81,18 @@ mod_amostras_ui <- function(id) {
     tags$div(
       style = "display: none;",
       numericInput(ns("test_selected_sample_index"), "Indice de teste", value = NA_integer_),
+      textInput(ns("test_selected_sample_indices"), "Indices de teste", value = ""),
       numericInput(ns("test_map_lat"), "Latitude de teste", value = NA_real_),
       numericInput(ns("test_map_lng"), "Longitude de teste", value = NA_real_)
     ),
     bslib::layout_columns(
       col_widths = c(3, 3, 3, 3),
       actionButton(ns("editar_amostra"), "Editar selecionada", class = "btn btn-secondary"),
-      actionButton(ns("duplicar_amostra"), "Duplicar selecionada", class = "btn btn-secondary"),
-      actionButton(ns("remover_amostra"), "Remover selecionada", class = "btn btn-outline-primary"),
-      p(class = "muted-help", "Selecione uma linha para editar, duplicar ou remover.")
+      actionButton(ns("duplicar_amostra"), "Duplicar selecionada(s)", class = "btn btn-secondary"),
+      actionButton(ns("aplicar_analises"), "Aplicar análises às selecionadas", class = "btn btn-secondary"),
+      actionButton(ns("remover_amostra"), "Remover selecionada(s)", class = "btn btn-outline-primary")
     ),
+    p(class = "muted-help", "Selecione uma ou mais linhas. Editar usa a primeira; duplicar, remover e aplicar análises agem em todas as selecionadas."),
     DT::DTOutput(ns("tabela_amostras"))
   )
 }
@@ -472,29 +474,115 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
     })
 
     observeEvent(input$duplicar_amostra, {
-      selected <- selected_sample_index(input)
+      selected <- selected_sample_indices(input)
       current <- samples()
 
       if (!length(selected) || !length(current)) {
-        showNotification("Selecione uma amostra para duplicar.", type = "warning")
+        showNotification("Selecione ao menos uma amostra para duplicar.", type = "warning")
         return()
       }
 
-      samples(duplicate_sample_at(current, selected[1]))
-      showNotification("Amostra duplicada.", type = "message")
+      selected <- selected[selected >= 1 & selected <= length(current)]
+      novas <- lapply(selected, function(i) {
+        d <- current[[i]]
+        d$referencia_amostra <- paste(d$referencia_amostra, "copia")
+        d
+      })
+      samples(c(current, novas))
+      showNotification(sprintf("%d amostra(s) duplicada(s).", length(novas)), type = "message")
     })
 
     observeEvent(input$remover_amostra, {
-      selected <- selected_sample_index(input)
+      selected <- selected_sample_indices(input)
       current <- samples()
 
       if (!length(selected) || !length(current)) {
-        showNotification("Selecione uma amostra para remover.", type = "warning")
+        showNotification("Selecione ao menos uma amostra para remover.", type = "warning")
         return()
       }
 
-      samples(remove_sample_at(current, selected[1]))
-      showNotification("Amostra removida.", type = "message")
+      restante <- remove_samples_at(current, selected)
+      removidas <- length(current) - length(restante)
+      samples(restante)
+      showNotification(sprintf("%d amostra(s) removida(s).", removidas), type = "message")
+    })
+
+    output$aplicar_analises_ui <- renderUI({
+      ns <- session$ns
+      groups <- input$aplicar_grupos %||% character()
+      if (!length(groups)) {
+        return(p(class = "muted-help", "Selecione ao menos um grupo de análise."))
+      }
+      tagList(lapply(groups, function(group_id) {
+        choices <- analysis_choices(app_config, group_id)
+        group_name <- app_config$analises[[group_id]]$nome %||% group_id
+        checkboxGroupInput(
+          ns(paste0("aplicar_analises_", group_id)),
+          paste("Análises -", group_name),
+          choices = choices,
+          selected = character()
+        )
+      }))
+    })
+
+    observeEvent(input$aplicar_analises, {
+      ns <- session$ns
+      selected <- selected_sample_indices(input)
+      if (!length(selected)) {
+        showNotification("Selecione ao menos uma amostra na tabela.", type = "warning")
+        return()
+      }
+      showModal(modalDialog(
+        title = "Aplicar análises às amostras selecionadas",
+        size = "l",
+        easyClose = TRUE,
+        p(class = "muted-help", sprintf("%d amostra(s) selecionada(s) receberão as análises marcadas abaixo.", length(selected))),
+        checkboxGroupInput(
+          ns("aplicar_grupos"),
+          "Grupos de análise",
+          choices = c(
+            "Solo rotina" = "solo_rotina",
+            "Vegetal" = "vegetal",
+            "CHN" = "chn",
+            "Absorção atômica" = "absorcao_atomica",
+            "ICP-OES" = "icp_oes"
+          ),
+          inline = TRUE
+        ),
+        uiOutput(ns("aplicar_analises_ui")),
+        radioButtons(
+          ns("aplicar_modo"),
+          "Como aplicar?",
+          choices = c(
+            "Acrescentar às análises existentes" = "acrescentar",
+            "Substituir as análises existentes" = "substituir"
+          ),
+          selected = "acrescentar"
+        ),
+        footer = tagList(
+          modalButton("Cancelar"),
+          actionButton(ns("aplicar_confirmar"), "Aplicar", class = "btn btn-primary")
+        )
+      ))
+    })
+
+    observeEvent(input$aplicar_confirmar, {
+      selected <- selected_sample_indices(input)
+      groups <- input$aplicar_grupos %||% character()
+      new_analyses <- collect_analyses_from(input, app_config, groups, "aplicar_analises_")
+
+      if (!length(selected)) {
+        showNotification("Nenhuma amostra selecionada.", type = "warning")
+        return()
+      }
+      if (!nrow(new_analyses)) {
+        showNotification("Marque ao menos uma análise para aplicar.", type = "error")
+        return()
+      }
+
+      samples(apply_analyses_to_samples(samples(), selected, new_analyses, input$aplicar_modo %||% "acrescentar"))
+      removeModal()
+      showNotification(sprintf("Análises aplicadas a %d amostra(s).", length(unique(selected))), type = "message")
     })
 
     output$tabela_amostras <- DT::renderDT({
@@ -515,7 +603,7 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
         Analises = analises_str,
         stringsAsFactors = FALSE
       )
-    }, selection = "single", options = list(pageLength = 5, searching = FALSE))
+    }, selection = "multiple", options = list(pageLength = 5, searching = FALSE))
 
     exportTestValues(
       editing_index = editing_index(),
@@ -626,6 +714,90 @@ selected_sample_index <- function(input) {
   }
 
   integer()
+}
+
+selected_sample_indices <- function(input) {
+  selected <- input$tabela_amostras_rows_selected
+  if (length(selected)) {
+    return(as.integer(selected))
+  }
+
+  multi <- input$test_selected_sample_indices
+  if (!is.null(multi) && length(multi) && nzchar(multi)) {
+    nums <- suppressWarnings(as.integer(trimws(strsplit(multi, ",")[[1]])))
+    nums <- nums[!is.na(nums)]
+    if (length(nums)) {
+      return(nums)
+    }
+  }
+
+  single <- input$test_selected_sample_index
+  if (!is.null(single) && length(single) && !is.na(single)) {
+    return(as.integer(single))
+  }
+
+  integer()
+}
+
+remove_samples_at <- function(samples, indices) {
+  indices <- indices[indices >= 1 & indices <= length(samples)]
+  if (!length(indices)) {
+    return(samples)
+  }
+  keep <- setdiff(seq_along(samples), unique(indices))
+  samples[keep]
+}
+
+apply_analyses_to_samples <- function(samples, indices, new_analyses, mode = "acrescentar") {
+  indices <- unique(indices[indices >= 1 & indices <= length(samples)])
+  if (!length(indices) || !nrow(new_analyses)) {
+    return(samples)
+  }
+
+  for (i in indices) {
+    s <- samples[[i]]
+    if (identical(mode, "substituir")) {
+      combined <- new_analyses
+    } else {
+      combined <- rbind(s$analises, new_analyses)
+      combined <- combined[!duplicated(combined[c("laboratorio", "analise_id")]), , drop = FALSE]
+    }
+    s$analises <- combined
+    s$analises_ids <- combined$analise_id
+    s$analises_nomes <- combined$analise_nome
+    s$grupos_analise <- unique(combined$laboratorio)
+    samples[[i]] <- s
+  }
+
+  samples
+}
+
+collect_analyses_from <- function(input, app_config, groups, prefix) {
+  rows <- lapply(groups, function(group_id) {
+    selected <- input[[paste0(prefix, group_id)]] %||% character()
+    if (!length(selected)) {
+      return(NULL)
+    }
+    choices <- analysis_choices(app_config, group_id)
+    data.frame(
+      laboratorio = group_id,
+      analise_id = selected,
+      analise_nome = unname(names(choices)[match(selected, choices)]),
+      stringsAsFactors = FALSE
+    )
+  })
+
+  rows <- Filter(Negate(is.null), rows)
+  if (!length(rows)) {
+    return(data.frame(
+      laboratorio = character(),
+      analise_id = character(),
+      analise_nome = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  do.call(rbind, rows)
 }
 
 replace_sample_at <- function(samples, index, sample) {
