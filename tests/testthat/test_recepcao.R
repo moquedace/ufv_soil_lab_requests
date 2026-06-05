@@ -171,3 +171,24 @@ test_that("format_sample_location formats coordinates or returns empty", {
                      tipo_localizacao = "aproximada", stringsAsFactors = FALSE)
   expect_equal(format_sample_location(s_na), "")
 })
+
+test_that("format_sample_depth formats depth range or layer classification", {
+  s <- data.frame(
+    profundidade_de = 0,
+    profundidade_ate = 20,
+    camada = "",
+    stringsAsFactors = FALSE
+  )
+  expect_equal(format_sample_depth(s), "0-20 cm")
+
+  s$profundidade_de <- NA_real_
+  s$profundidade_ate <- NA_real_
+  s$camada <- "superficial"
+  expect_equal(format_sample_depth(s), "Superficial")
+
+  s$camada <- ""
+  expect_equal(format_sample_depth(s), "")
+
+  antigo <- data.frame(referencia_amostra = "A", stringsAsFactors = FALSE)
+  expect_equal(format_sample_depth(antigo), "")
+})

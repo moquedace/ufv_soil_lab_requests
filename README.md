@@ -20,8 +20,12 @@ Google Sheets e exportação para CSV/XLSX.
 - **Dados do solicitante**: nome, e-mail, telefone, CPF/CNPJ, endereço completo
   (com bairro e CEP), cidade/UF, vínculo, matrícula (para vínculos acadêmicos),
   instituição, orientador e observações.
-- **Múltiplas amostras por solicitação**, cada uma com referência, material e
-  localização própria.
+- **Múltiplas amostras por solicitação**, cada uma com referência, material,
+  profundidade/camada e localização própria.
+- **Geração em lote de amostras** a partir de intervalos numéricos, listas
+  coladas ou combinações de pontos por camadas.
+- **Ações em múltiplas amostras selecionadas**, incluindo duplicar, remover e
+  aplicar análises em bloco.
 - **Cinco grupos de análise** com campos condicionais conforme a ficha original:
   - **Solo rotina** — química e física (pH, P, K, granulometria, densidade, etc.)
   - **Vegetal** — com tipo de amostra (folha, galho, casca, raiz...) e cultura/planta
@@ -70,7 +74,7 @@ R/
   storage_google_sheets.R   # leitura/escrita no Google Sheets
   exportacao.R              # achatamento de dados e exportação CSV/XLSX
 config/analises.yml         # definição dos grupos e tipos de análise
-tests/testthat/             # suíte de testes (262 testes)
+tests/testthat/             # suíte de testes automatizados
 scripts/                    # instalação, execução, testes e manutenção
 docs/especificacao_mvp.md   # especificação inicial do MVP
 prototipo/                  # protótipos de design (HTML)
@@ -202,7 +206,7 @@ rsconnect::showLogs(appName = "ufv-soil-lab-requests")
 source("scripts/02_run_tests.R")
 ```
 
-A suíte (**262 testes**) cobre parsing de coordenadas, configuração de análises,
+A suíte cobre parsing de coordenadas, configuração de análises,
 construção e validação de amostras, exportação tabular, lógica da recepção,
 schema do Google Sheets, geração de IDs e o fluxo Shiny ponta a ponta
 (preenchimento, consentimento, envio, edição e autenticação da recepção). Os
