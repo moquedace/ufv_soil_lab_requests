@@ -140,6 +140,24 @@ format_sample_location <- function(sample) {
   sprintf("%.5f, %.5f (%s)", lat, lng, tipo)
 }
 
+format_sample_depth <- function(sample) {
+  de <- suppressWarnings(as.numeric(field_value(sample, "profundidade_de", NA_real_)))
+  ate <- suppressWarnings(as.numeric(field_value(sample, "profundidade_ate", NA_real_)))
+  if (!is.na(de) && !is.na(ate)) {
+    return(sprintf("%g-%g cm", de, ate))
+  }
+
+  camada <- field_value(sample, "camada", "")
+  if (!nzchar(camada)) {
+    return("")
+  }
+
+  recepcao_code_label(camada, list(
+    superficial = "Superficial",
+    subsuperficial = "Subsuperficial"
+  ))
+}
+
 format_sample_detail <- function(sample, sample_analyses) {
   grupos <- strsplit(as.character(sample$grupos_analise[[1]] %||% ""), ";")[[1]]
   is_v <- "vegetal" %in% grupos
@@ -163,6 +181,7 @@ format_sample_detail <- function(sample, sample_analyses) {
     tags$dl(
       detail_dd("Referência", sample$referencia_amostra),
       detail_dd("Material", sample$tipo_material),
+      detail_dd("Profundidade/camada", format_sample_depth(sample)),
       detail_dd("Município", municipio),
       detail_dd("Localidade", sample$localidade_descricao),
       detail_dd("Coordenadas", format_sample_location(sample)),
