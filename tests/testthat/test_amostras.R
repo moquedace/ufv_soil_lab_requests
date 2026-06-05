@@ -77,6 +77,57 @@ test_that("build_sample_from_inputs returns correct structure for solo_rotina", 
   expect_true(is.na(result$elementos_aa_icp))
 })
 
+test_that("build_sample_from_inputs captures soil depth fields", {
+  app_config <- load_app_config(testthat::test_path("../../config/analises.yml"))
+  input <- make_base_input(
+    "solo_rotina",
+    analises_solo_rotina = "rotina_basica",
+    profundidade_de = 0,
+    profundidade_ate = 20,
+    camada = ""
+  )
+  result <- build_sample_from_inputs(input, app_config, NULL)
+  expect_equal(result$profundidade_de, 0)
+  expect_equal(result$profundidade_ate, 20)
+  expect_equal(result$camada, "")
+})
+
+test_that("build_sample_from_inputs captures camada classification when depth unknown", {
+  app_config <- load_app_config(testthat::test_path("../../config/analises.yml"))
+  input <- make_base_input(
+    "solo_rotina",
+    analises_solo_rotina = "rotina_basica",
+    camada = "superficial"
+  )
+  result <- build_sample_from_inputs(input, app_config, NULL)
+  expect_true(is.na(result$profundidade_de))
+  expect_equal(result$camada, "superficial")
+})
+
+test_that("build_sample_from_inputs drops depth fields for non-soil material", {
+  app_config <- load_app_config(testthat::test_path("../../config/analises.yml"))
+  input <- make_base_input(
+    "vegetal",
+    analises_vegetal = "nitrogenio",
+    profundidade_de = 0,
+    profundidade_ate = 20,
+    camada = "superficial"
+  )
+  input$tipo_material <- "Vegetal"
+  result <- build_sample_from_inputs(input, app_config, NULL)
+  expect_true(is.na(result$profundidade_de))
+  expect_true(is.na(result$profundidade_ate))
+  expect_true(is.na(result$camada))
+})
+
+test_that("depth_order_ok validates top/base ordering", {
+  expect_false(depth_order_ok(40, 20))
+  expect_false(depth_order_ok(20, 20))
+  expect_true(depth_order_ok(0, 20))
+  expect_true(depth_order_ok(NA, 20))
+  expect_true(depth_order_ok(NULL, NULL))
+})
+
 test_that("build_sample_from_inputs sets vegetal fields when vegetal in groups", {
   app_config <- load_app_config(testthat::test_path("../../config/analises.yml"))
   input <- make_base_input(

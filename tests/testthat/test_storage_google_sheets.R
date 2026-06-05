@@ -35,6 +35,7 @@ test_that("sheet_columns amostras contains all required fields including new one
     "amostra_id", "solicitacao_id", "referencia_amostra",
     "tipo_material", "municipio_amostra", "uf_amostra",
     "latitude_wgs84", "longitude_wgs84", "tipo_localizacao",
+    "profundidade_de", "profundidade_ate", "camada",
     "grupos_analise", "carbonato_presente", "pre_tratamento_necessario",
     "tipo_amostra_vegetal", "cultura_planta",
     "percentual_c_estimado", "percentual_n_estimado", "numero_registro_projeto",

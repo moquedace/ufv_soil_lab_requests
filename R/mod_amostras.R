@@ -14,6 +14,24 @@ mod_amostras_ui <- function(id) {
           choices = c("Solo", "Vegetal", "Extrato/digestão", "Outro")
         )
       ),
+      conditionalPanel(
+        condition = sprintf("input['%s'] == 'Solo'", ns("tipo_material")),
+        tags$label(class = "control-label", "Profundidade da amostra (cm) — recomendado"),
+        bslib::layout_columns(
+          col_widths = c(4, 4, 4),
+          numericInput(ns("profundidade_de"), "De (topo)", value = NA, min = 0, step = 1),
+          numericInput(ns("profundidade_ate"), "Até (base)", value = NA, min = 0, step = 1),
+          selectInput(
+            ns("camada"),
+            "Ou camada (se não souber)",
+            choices = c("Não informado" = "", "Superficial" = "superficial", "Subsuperficial" = "subsuperficial")
+          )
+        ),
+        p(
+          class = "muted-help",
+          "Da superfície (0) para baixo — ex.: de 0 a 20 cm. Não sabe os valores exatos? Indique ao menos a camada (superficial/subsuperficial)."
+        )
+      ),
       checkboxGroupInput(
         ns("grupos_analise"),
         "Grupos de análise para esta amostra",
@@ -349,7 +367,7 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
         fim = input$gerar_fim,
         digitos = input$gerar_digitos %||% 3,
         sufixo = input$gerar_sufixo %||% "",
-        profundidades = split_lines(input$gerar_profundidades %||% ""),
+        camadas = split_lines(input$gerar_camadas %||% ""),
         lista = split_lines(input$gerar_lista %||% "")
       )
     })
@@ -395,7 +413,13 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
         ),
         conditionalPanel(
           condition = sprintf("input['%s'] == 'camadas'", ns("gerar_modo")),
-          textAreaInput(ns("gerar_profundidades"), "Profundidades/camadas (uma por linha)", value = "0-20\n20-40", rows = 3)
+          textAreaInput(
+            ns("gerar_camadas"),
+            "Camadas — uma por linha (ex.: 0-20, 20-40)",
+            value = "0-20\n20-40",
+            rows = 3
+          ),
+          p(class = "muted-help", "Cada camada vira a profundidade da amostra (de–até) e entra na referência. Ex.: P001 0-20.")
         ),
         conditionalPanel(
           condition = sprintf("input['%s'] == 'lista'", ns("gerar_modo")),
@@ -412,7 +436,7 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
 
     observeEvent(input$gerar_confirmar, {
       refs <- gerador_refs()
-      if (!length(refs)) {
+      if (!nrow(refs)) {
         showNotification("Defina ao menos uma referência para gerar.", type = "error")
         return()
       }
@@ -427,14 +451,21 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
         return()
       }
 
-      novas <- lapply(refs, function(ref) {
+      novas <- lapply(seq_len(nrow(refs)), function(k) {
         m <- molde
-        m$referencia_amostra <- ref
+        m$referencia_amostra <- refs$referencia[[k]]
+        if (!is.na(refs$profundidade_de[[k]])) {
+          m$profundidade_de <- refs$profundidade_de[[k]]
+        }
+        if (!is.na(refs$profundidade_ate[[k]])) {
+          m$profundidade_ate <- refs$profundidade_ate[[k]]
+          m$camada <- ""
+        }
         m
       })
       samples(c(samples(), novas))
       removeModal()
-      showNotification(sprintf("%d amostras geradas.", length(refs)), type = "message")
+      showNotification(sprintf("%d amostras geradas.", nrow(refs)), type = "message")
     })
 
     observeEvent(input$editar_amostra, {
@@ -596,6 +627,7 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
       data.frame(
         Referencia = vapply(current, `[[`, character(1), "referencia_amostra"),
         Material = vapply(current, `[[`, character(1), "tipo_material"),
+        Profundidade = vapply(current, format_depth, character(1)),
         Grupos = grupos_str,
         Municipio = vapply(current, `[[`, character(1), "municipio_amostra"),
         UF = vapply(current, `[[`, character(1), "uf_amostra"),
@@ -614,6 +646,19 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
   })
 }
 
+format_depth <- function(sample) {
+  de <- sample$profundidade_de
+  ate <- sample$profundidade_ate
+  if (!is.null(de) && !is.null(ate) && !is.na(de) && !is.na(ate)) {
+    return(sprintf("%g-%g cm", de, ate))
+  }
+  cam <- sample$camada %||% ""
+  if (!is.null(cam) && length(cam) && nzchar(cam)) {
+    return(paste0(toupper(substring(cam, 1, 1)), substring(cam, 2)))
+  }
+  "—"
+}
+
 split_lines <- function(text) {
   if (is.null(text) || !length(text) || !nzchar(text)) {
     return(character())
@@ -623,9 +668,28 @@ split_lines <- function(text) {
   parts[nzchar(parts)]
 }
 
+parse_depth_layer <- function(text) {
+  label <- trimws(text)
+  matches <- regmatches(label, gregexpr("[0-9]+([.,][0-9]+)?", label))[[1]]
+  nums <- suppressWarnings(as.numeric(gsub(",", ".", matches)))
+  nums <- nums[!is.na(nums)]
+  de <- if (length(nums) >= 1) nums[[1]] else NA_real_
+  ate <- if (length(nums) >= 2) nums[[2]] else NA_real_
+  list(label = label, de = de, ate = ate)
+}
+
+empty_reference_table <- function() {
+  data.frame(
+    referencia = character(),
+    profundidade_de = numeric(),
+    profundidade_ate = numeric(),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_sample_references <- function(mode = "numerico", prefixo = "", inicio = NA,
                                     fim = NA, digitos = 3, sufixo = "",
-                                    profundidades = character(), lista = character(),
+                                    camadas = character(), lista = character(),
                                     limite = 1000L) {
   digitos <- suppressWarnings(as.integer(digitos))
   if (is.na(digitos) || digitos < 1) digitos <- 1L
@@ -639,35 +703,58 @@ build_sample_references <- function(mode = "numerico", prefixo = "", inicio = NA
     paste0(prefixo, formatC(seq.int(i, f), width = digitos, flag = "0"))
   }
 
-  refs <- switch(
+  flat_refs <- function(refs) {
+    refs <- refs[nzchar(refs)]
+    if (!length(refs)) {
+      return(empty_reference_table())
+    }
+    data.frame(
+      referencia = refs,
+      profundidade_de = NA_real_,
+      profundidade_ate = NA_real_,
+      stringsAsFactors = FALSE
+    )
+  }
+
+  out <- switch(
     mode,
-    numerico = paste0(seq_pontos(), sufixo),
+    numerico = flat_refs(paste0(seq_pontos(), sufixo)),
+    lista = flat_refs(trimws(lista)),
     camadas = {
       pontos <- seq_pontos()
-      profs <- trimws(profundidades)
-      profs <- profs[nzchar(profs)]
-      if (!length(pontos) || !length(profs)) {
-        character()
+      camadas_txt <- trimws(camadas)
+      camadas_txt <- camadas_txt[nzchar(camadas_txt)]
+      if (!length(pontos) || !length(camadas_txt)) {
+        empty_reference_table()
       } else {
-        grid <- expand.grid(d = profs, p = pontos, stringsAsFactors = FALSE)
-        paste(grid$p, grid$d)
+        layers <- lapply(camadas_txt, parse_depth_layer)
+        rows <- list()
+        for (p in pontos) {
+          for (ly in layers) {
+            rows[[length(rows) + 1L]] <- data.frame(
+              referencia = trimws(paste(p, ly$label)),
+              profundidade_de = ly$de,
+              profundidade_ate = ly$ate,
+              stringsAsFactors = FALSE
+            )
+          }
+        }
+        do.call(rbind, rows)
       }
     },
-    lista = {
-      l <- trimws(lista)
-      l[nzchar(l)]
-    },
-    character()
+    empty_reference_table()
   )
 
-  refs <- refs[nzchar(refs)]
-  if (length(refs) > limite) {
-    refs <- refs[seq_len(limite)]
+  if (nrow(out) > limite) {
+    out <- out[seq_len(limite), , drop = FALSE]
   }
-  refs
+  out
 }
 
 preview_references <- function(refs) {
+  if (is.data.frame(refs)) {
+    refs <- refs$referencia
+  }
   n <- length(refs)
   if (!n) {
     return("Nenhuma referência gerada — preencha os campos acima.")
@@ -835,6 +922,11 @@ build_sample_from_inputs <- function(input, app_config, point) {
   is_vegetal <- "vegetal" %in% groups
   is_chn     <- "chn" %in% groups
   is_aa_icp  <- "absorcao_atomica" %in% groups || "icp_oes" %in% groups
+  is_solo    <- identical(input$tipo_material, "Solo")
+
+  profundidade_de  <- if (is_solo) (input$profundidade_de %||% NA_real_) else NA_real_
+  profundidade_ate <- if (is_solo) (input$profundidade_ate %||% NA_real_) else NA_real_
+  camada           <- if (is_solo) (input$camada %||% "") else NA_character_
 
   tipo_amostra_vegetal <- if (is_vegetal) (input$tipo_amostra_vegetal %||% "") else NA_character_
   cultura_planta <- if (is_vegetal) (input$cultura_planta %||% "") else NA_character_
@@ -868,6 +960,9 @@ build_sample_from_inputs <- function(input, app_config, point) {
     latitude_wgs84 = lat_wgs84,
     longitude_wgs84 = lng_wgs84,
     tipo_localizacao = input$tipo_localizacao,
+    profundidade_de = profundidade_de,
+    profundidade_ate = profundidade_ate,
+    camada = camada,
     tipo_amostra_vegetal = tipo_amostra_vegetal,
     cultura_planta = cultura_planta,
     carbonato_presente = carbonato_presente,
@@ -908,7 +1003,19 @@ validate_sample_for_ui <- function(sample) {
     return(FALSE)
   }
 
+  if (!depth_order_ok(sample$profundidade_de, sample$profundidade_ate)) {
+    showNotification("A profundidade final (base) deve ser maior que a inicial (topo).", type = "error")
+    return(FALSE)
+  }
+
   TRUE
+}
+
+depth_order_ok <- function(prof_de, prof_ate) {
+  if (is.null(prof_de) || is.null(prof_ate) || is.na(prof_de) || is.na(prof_ate)) {
+    return(TRUE)
+  }
+  prof_ate > prof_de
 }
 
 load_sample_into_form <- function(session, sample, marker) {
@@ -919,6 +1026,9 @@ load_sample_into_form <- function(session, sample, marker) {
   updateTextInput(session, "uf_amostra", value = sample$uf_amostra)
   updateTextInput(session, "localidade_descricao", value = sample$localidade_descricao)
   updateRadioButtons(session, "tipo_localizacao", selected = sample$tipo_localizacao)
+  updateNumericInput(session, "profundidade_de", value = sample$profundidade_de %||% NA)
+  updateNumericInput(session, "profundidade_ate", value = sample$profundidade_ate %||% NA)
+  updateSelectInput(session, "camada", selected = sample$camada %||% "")
 
   if (!is.na(sample$latitude_wgs84) && !is.na(sample$longitude_wgs84)) {
     point <- list(lat = sample$latitude_wgs84, lng = sample$longitude_wgs84)
