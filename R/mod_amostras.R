@@ -114,7 +114,10 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
 
     output$acao_amostra_ui <- renderUI({
       if (is.null(editing_index())) {
-        actionButton(session$ns("adicionar"), "Adicionar amostra", class = "btn btn-primary")
+        tagList(
+          actionButton(session$ns("adicionar"), "Adicionar amostra", class = "btn btn-primary"),
+          actionButton(session$ns("abrir_gerador"), "Gerar várias amostras", class = "btn btn-outline-primary")
+        )
       } else {
         tagList(
           actionButton(session$ns("atualizar_amostra"), "Atualizar amostra", class = "btn btn-primary"),
@@ -336,6 +339,102 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
       showNotification("Amostra adicionada.", type = "message")
     })
 
+    gerador_refs <- reactive({
+      build_sample_references(
+        mode = input$gerar_modo %||% "numerico",
+        prefixo = input$gerar_prefixo %||% "",
+        inicio = input$gerar_inicio,
+        fim = input$gerar_fim,
+        digitos = input$gerar_digitos %||% 3,
+        sufixo = input$gerar_sufixo %||% "",
+        profundidades = split_lines(input$gerar_profundidades %||% ""),
+        lista = split_lines(input$gerar_lista %||% "")
+      )
+    })
+
+    output$gerar_preview <- renderText({
+      preview_references(gerador_refs())
+    })
+
+    observeEvent(input$abrir_gerador, {
+      ns <- session$ns
+      showModal(modalDialog(
+        title = "Gerar várias amostras",
+        size = "l",
+        easyClose = TRUE,
+        p(
+          class = "muted-help",
+          "As amostras serão criadas com o material, grupos de análise, análises e ",
+          "localização preenchidos no formulário (o molde). Apenas a referência muda."
+        ),
+        radioButtons(
+          ns("gerar_modo"),
+          "Como gerar as referências?",
+          choices = c(
+            "Numérico (prefixo + intervalo)" = "numerico",
+            "Por camadas (pontos × profundidades)" = "camadas",
+            "Colar lista (uma por linha)" = "lista"
+          ),
+          selected = "numerico"
+        ),
+        conditionalPanel(
+          condition = sprintf("['numerico','camadas'].includes(input['%s'])", ns("gerar_modo")),
+          bslib::layout_columns(
+            col_widths = c(4, 3, 3, 2),
+            textInput(ns("gerar_prefixo"), "Prefixo", value = "P"),
+            numericInput(ns("gerar_inicio"), "Início", value = 1, min = 0),
+            numericInput(ns("gerar_fim"), "Fim", value = 10, min = 0),
+            numericInput(ns("gerar_digitos"), "Dígitos", value = 3, min = 1, max = 6)
+          )
+        ),
+        conditionalPanel(
+          condition = sprintf("input['%s'] == 'numerico'", ns("gerar_modo")),
+          textInput(ns("gerar_sufixo"), "Sufixo (opcional)", value = "")
+        ),
+        conditionalPanel(
+          condition = sprintf("input['%s'] == 'camadas'", ns("gerar_modo")),
+          textAreaInput(ns("gerar_profundidades"), "Profundidades/camadas (uma por linha)", value = "0-20\n20-40", rows = 3)
+        ),
+        conditionalPanel(
+          condition = sprintf("input['%s'] == 'lista'", ns("gerar_modo")),
+          textAreaInput(ns("gerar_lista"), "Referências (uma por linha)", rows = 6, placeholder = "Amostra A\nAmostra B")
+        ),
+        tags$hr(),
+        div(class = "review-box", textOutput(ns("gerar_preview"))),
+        footer = tagList(
+          modalButton("Cancelar"),
+          actionButton(ns("gerar_confirmar"), "Gerar amostras", class = "btn btn-primary")
+        )
+      ))
+    })
+
+    observeEvent(input$gerar_confirmar, {
+      refs <- gerador_refs()
+      if (!length(refs)) {
+        showNotification("Defina ao menos uma referência para gerar.", type = "error")
+        return()
+      }
+
+      molde <- build_sample_from_inputs(input, app_config, current_marker(marker(), input))
+      if (!nzchar(molde$municipio_amostra %||% "")) {
+        showNotification("Informe o município no formulário antes de gerar.", type = "error")
+        return()
+      }
+      if (!nrow(molde$analises)) {
+        showNotification("Marque ao menos uma análise no formulário antes de gerar.", type = "error")
+        return()
+      }
+
+      novas <- lapply(refs, function(ref) {
+        m <- molde
+        m$referencia_amostra <- ref
+        m
+      })
+      samples(c(samples(), novas))
+      removeModal()
+      showNotification(sprintf("%d amostras geradas.", length(refs)), type = "message")
+    })
+
     observeEvent(input$editar_amostra, {
       selected <- selected_sample_index(input)
       current <- samples()
@@ -425,6 +524,72 @@ mod_amostras_server <- function(id, app_config, reset_trigger = reactive(NULL)) 
 
     samples
   })
+}
+
+split_lines <- function(text) {
+  if (is.null(text) || !length(text) || !nzchar(text)) {
+    return(character())
+  }
+  parts <- strsplit(text, "\r?\n")[[1]]
+  parts <- trimws(parts)
+  parts[nzchar(parts)]
+}
+
+build_sample_references <- function(mode = "numerico", prefixo = "", inicio = NA,
+                                    fim = NA, digitos = 3, sufixo = "",
+                                    profundidades = character(), lista = character(),
+                                    limite = 1000L) {
+  digitos <- suppressWarnings(as.integer(digitos))
+  if (is.na(digitos) || digitos < 1) digitos <- 1L
+
+  seq_pontos <- function() {
+    i <- suppressWarnings(as.integer(inicio))
+    f <- suppressWarnings(as.integer(fim))
+    if (is.na(i) || is.na(f) || f < i) {
+      return(character())
+    }
+    paste0(prefixo, formatC(seq.int(i, f), width = digitos, flag = "0"))
+  }
+
+  refs <- switch(
+    mode,
+    numerico = paste0(seq_pontos(), sufixo),
+    camadas = {
+      pontos <- seq_pontos()
+      profs <- trimws(profundidades)
+      profs <- profs[nzchar(profs)]
+      if (!length(pontos) || !length(profs)) {
+        character()
+      } else {
+        grid <- expand.grid(d = profs, p = pontos, stringsAsFactors = FALSE)
+        paste(grid$p, grid$d)
+      }
+    },
+    lista = {
+      l <- trimws(lista)
+      l[nzchar(l)]
+    },
+    character()
+  )
+
+  refs <- refs[nzchar(refs)]
+  if (length(refs) > limite) {
+    refs <- refs[seq_len(limite)]
+  }
+  refs
+}
+
+preview_references <- function(refs) {
+  n <- length(refs)
+  if (!n) {
+    return("Nenhuma referência gerada — preencha os campos acima.")
+  }
+  amostra <- if (n <= 6) {
+    paste(refs, collapse = ", ")
+  } else {
+    paste0(paste(utils::head(refs, 3), collapse = ", "), " … ", paste(utils::tail(refs, 2), collapse = ", "))
+  }
+  sprintf("Serão geradas %d amostras: %s", n, amostra)
 }
 
 remove_sample_at <- function(samples, index) {
