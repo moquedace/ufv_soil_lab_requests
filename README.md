@@ -1,15 +1,46 @@
 # UFV Soil Lab Requests
 
 <p align="center">
+  <img src="https://img.shields.io/badge/R-Shiny-276DC3?style=flat-square&logo=r&logoColor=white"/>
+  <img src="https://img.shields.io/badge/storage-Google%20Sheets-34A853?style=flat-square&logo=googlesheets&logoColor=white"/>
+  <img src="https://img.shields.io/badge/domain-soil%20laboratory-7A5A3F?style=flat-square"/>
+  <img src="https://img.shields.io/badge/status-piloto-orange?style=flat-square"/>
+  <img src="https://img.shields.io/badge/UFV-DPS-1F5F4A?style=flat-square"/>
+</p>
+
+<p align="center">
   <img src="www/img/logo_ufv.png" alt="Universidade Federal de Viçosa" width="310">
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="www/img/logo_dps_ufv.png" alt="Departamento de Solos UFV" width="230">
 </p>
 
-Aplicação web em **R/Shiny** para solicitação de análises de amostras do
-**Departamento de Solos (DPS) da Universidade Federal de Viçosa**. Substitui o
-fluxo em papel das fichas de recepção por um formulário digital, com histórico em
-Google Sheets e exportação para CSV/XLSX.
+<p align="center">
+  Sistema web em <strong>R/Shiny</strong> para digitalizar a solicitação e recepção
+  de análises de solo, vegetal, CHN, absorção atômica e ICP-OES no
+  <strong>Departamento de Solos da UFV</strong>.
+</p>
+
+---
+
+## Visão geral
+
+O projeto substitui o fluxo baseado em fichas impressas por um formulário digital
+com histórico em Google Sheets, exportação CSV/XLSX e área interna de recepção.
+
+```
+Solicitante                    Recepção DPS/UFV                  Dados
+     │                                │                            │
+     ├── dados pessoais + LGPD        │                            │
+     ├── uma ou várias amostras       │                            │
+     ├── mapa, município, profundidade│                            │
+     ├── análises por laboratório     │                            │
+     │                                │                            │
+     └────────── envio ──────────────►│  conferência operacional   │
+                                      ├── campos internos          │
+                                      ├── filtros e detalhes       │
+                                      └────────── exportação ─────► CSV/XLSX
+                                                                  Google Sheets
+```
 
 ---
 
@@ -17,37 +48,35 @@ Google Sheets e exportação para CSV/XLSX.
 
 ### Área do solicitante (sem login)
 
-- **Dados do solicitante**: nome, e-mail, telefone, CPF/CNPJ, endereço completo
-  (com bairro e CEP), cidade/UF, vínculo, matrícula (para vínculos acadêmicos),
-  instituição, orientador e observações.
-- **Múltiplas amostras por solicitação**, cada uma com referência, material,
-  profundidade/camada e localização própria.
-- **Geração em lote de amostras** a partir de intervalos numéricos, listas
-  coladas ou combinações de pontos por camadas.
-- **Ações em múltiplas amostras selecionadas**, incluindo duplicar, remover e
-  aplicar análises em bloco.
-- **Cinco grupos de análise** com campos condicionais conforme a ficha original:
-  - **Solo rotina** — química e física (pH, P, K, granulometria, densidade, etc.)
-  - **Vegetal** — com tipo de amostra (folha, galho, casca, raiz...) e cultura/planta
-  - **CHN** — carbono total/orgânico, carbonato, %C/%N estimados, nº de projeto
-  - **Absorção atômica** — elementos, digestão, volumes, departamento, projeto
-  - **ICP-OES** — mesmos campos da absorção atômica + instruções do equipamento
-- **Mapa interativo** (Leaflet) com camadas de **satélite** e **rótulos**, busca
-  por município/localidade ou coordenada decimal. Coordenadas salvas em WGS84.
-- **Consentimento LGPD** (Lei nº 13.709/2018) obrigatório antes do envio e aviso
-  de privacidade sobre o uso da localização.
-- **Validação** de e-mail e telefone, **IDs únicos** por solicitação e **proteção
-  contra envio duplicado**.
+| Recurso | Descrição |
+|---------|-----------|
+| Dados do solicitante | Nome, contato, documento, endereço, vínculo, matrícula acadêmica quando aplicável e observações |
+| Amostras múltiplas | Uma solicitação pode conter várias amostras, cada uma com material, profundidade/camada e localização |
+| Geração em lote | Criação por intervalo numérico, lista colada ou pontos × camadas |
+| Edição em bloco | Duplicar, remover e aplicar análises a várias amostras selecionadas |
+| Localização | Busca por município/localidade/coordenada e mapa Leaflet com satélite e rótulos |
+| LGPD | Consentimento obrigatório e aviso de privacidade antes do envio |
+| Controle de envio | Validação de contato, IDs únicos e proteção contra duplo envio |
+
+### Grupos de análise
+
+| Grupo | Campos/observações |
+|-------|--------------------|
+| Solo rotina | Química e física: pH, P, K, granulometria, densidade, porosidade e outros |
+| Vegetal | Tipo de amostra, cultura/planta e análises nutricionais |
+| CHN | Carbono total/orgânico, nitrogênio, carbonato, %C/%N estimados e projeto |
+| Absorção atômica | Elementos, digestão, volumes, departamento e projeto |
+| ICP-OES | Elementos, preparo/digestão e instruções operacionais do equipamento |
 
 ### Área da recepção (protegida por senha)
 
-- Lista de solicitações com **filtros** por texto, status e grupo de análise.
-- **Detalhe completo** da solicitação selecionada: todos os dados do solicitante e
-  a ficha de cada amostra com seus campos específicos e análises.
-- **Campos internos do laboratório**: data de entrada, nº de laboratório, custo,
-  forma de pagamento, nº do pedido, status e observações internas.
-- **Badges de status** coloridos (Recebida, Em análise, Finalizada, etc.).
-- **Exportação CSV e XLSX** respeitando os filtros ativos.
+| Recurso | Descrição |
+|---------|-----------|
+| Filtros | Busca por texto, status e grupo de análise |
+| Detalhe completo | Dados do solicitante, amostras, profundidade/camada, localização e análises |
+| Campos internos | Data de entrada, número de laboratório, custo, pagamento, pedido, status e observações |
+| Status | Badges visuais para Recebida, Em análise, Finalizada, Cancelada etc. |
+| Exportação | CSV e XLSX respeitando os filtros ativos |
 
 ---
 
@@ -60,30 +89,24 @@ institucionais. Protótipos de design ficam em `prototipo/`.
 
 ---
 
-## Estrutura do projeto
+## Estrutura
 
-```
-app.R                       # ponto de entrada
-R/
-  app_ui.R / app_server.R   # UI (tema, navbar, hero, rodapé) e servidor
-  mod_solicitante.R         # formulário do solicitante + envio
-  mod_amostras.R            # amostras, mapa e campos condicionais
-  mod_recepcao.R            # área interna: lista, detalhe, campos internos
-  config.R                  # carregamento de configuração e ambiente
-  sample_data.R             # dados de exemplo + geração de IDs + safe_rbind
-  storage_google_sheets.R   # leitura/escrita no Google Sheets
-  exportacao.R              # achatamento de dados e exportação CSV/XLSX
-config/analises.yml         # definição dos grupos e tipos de análise
-tests/testthat/             # suíte de testes automatizados
-scripts/                    # instalação, execução, testes e manutenção
-docs/especificacao_mvp.md   # especificação inicial do MVP
-prototipo/                  # protótipos de design (HTML)
-www/img/                    # logos
-```
+| Caminho | Papel |
+|---------|-------|
+| [`app.R`](app.R) | Ponto de entrada da aplicação |
+| [`R/app_ui.R`](R/app_ui.R) · [`R/app_server.R`](R/app_server.R) | Tema, navegação, servidor e composição dos módulos |
+| [`R/mod_solicitante.R`](R/mod_solicitante.R) | Formulário externo, revisão, LGPD e envio |
+| [`R/mod_amostras.R`](R/mod_amostras.R) | Amostras, mapa, geração em lote, profundidade e análises |
+| [`R/mod_recepcao.R`](R/mod_recepcao.R) | Área interna, senha, filtros, detalhes e campos do laboratório |
+| [`R/storage_google_sheets.R`](R/storage_google_sheets.R) | Schema, leitura/escrita e limpeza do Google Sheets |
+| [`R/exportacao.R`](R/exportacao.R) | Achatamento dos dados e exportação CSV/XLSX |
+| [`config/analises.yml`](config/analises.yml) | Grupos e opções de análises |
+| [`tests/testthat/`](tests/testthat) | Suíte automatizada |
+| [`scripts/`](scripts) | Instalação, testes, Google Sheets, limpeza e deploy |
 
 ---
 
-## Como rodar localmente
+## Quickstart
 
 No RStudio, abra esta pasta como projeto/diretório de trabalho e rode:
 
@@ -95,7 +118,7 @@ source("scripts/01_run_app.R")            # inicia o aplicativo
 Sem configuração de Google Sheets, o app roda com **dados de exemplo em memória** —
 útil para explorar a interface.
 
-### Acesso à recepção
+### Recepção
 
 A aba **Recepção** é protegida por senha. A senha vem da variável de ambiente
 `LAB_RECEPTION_PASSWORD`; se não definida, o padrão é `dps2024`. Para definir uma
@@ -110,7 +133,7 @@ LAB_RECEPTION_PASSWORD=suasenha
 
 ---
 
-## Google Sheets (armazenamento do piloto)
+## Google Sheets
 
 Os dados são gravados em três abas: `solicitacoes`, `amostras` e
 `analises_amostra`.
@@ -130,7 +153,7 @@ Na primeira execução, o pacote `googlesheets4` abre o fluxo de autenticação 
 conta Google. Rode `scripts/03_setup_google_sheets.R` novamente sempre que novas
 colunas forem adicionadas ao sistema.
 
-### Manutenção da planilha
+### Manutenção
 
 ```r
 source("scripts/04_test_google_sheets_write.R")   # grava e lê um registro de teste
@@ -143,7 +166,7 @@ clear_google_store(confirm = TRUE)                 # apaga tudo, mantém cabeça
 
 ---
 
-## Deploy piloto no shinyapps.io
+## Deploy
 
 Para publicar o app no shinyapps.io, primeiro configure sua conta no RStudio/R:
 
